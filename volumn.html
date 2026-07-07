@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>正方體/長方體體積互動模擬器</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+    #info {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      border-left: 4px solid #ffaa00;
+    }
+    #info h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+    #info p {
+      margin: 4px 0 0 0;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    #controls {
+      position: absolute;
+      bottom: 30px;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px 30px;
+      background: rgba(30, 30, 40, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 18px 25px;
+      border-radius: 20px;
+      margin: 0 auto;
+      max-width: 1100px;
+      width: fit-content;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      z-index: 20;
+      pointer-events: auto;
+      color: #eee;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      min-width: 80px;
+    }
+    .control-group label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #aaa;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .control-group label span {
+      display: inline-block;
+      min-width: 24px;
+      font-weight: bold;
+      color: #ffaa66;
+      font-size: 1.1rem;
+    }
+    .control-group input[type="range"] {
+      width: 120px;
+      height: 4px;
+      -webkit-appearance: none;
+      background: #444;
+      border-radius: 10px;
+      outline: none;
+      cursor: pointer;
+    }
+    .control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffaa00;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      cursor: pointer;
+    }
+    .control-group input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffaa00;
+      border: 2px solid #fff;
+      cursor: pointer;
+    }
+    .value-badge {
+      background: #2a2a3a;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      border: 1px solid #555;
+      color: #fff;
+      min-width: 30px;
+      text-align: center;
+    }
+    #action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-left: 10px;
+      padding-left: 20px;
+      border-left: 1px solid #555;
+    }
+    .btn {
+      background: #3a3a4e;
+      border: none;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid transparent;
+    }
+    .btn:hover {
+      background: #5a5a7a;
+      transform: translateY(-2px);
+      border-color: #ffaa00;
+    }
+    .btn-primary {
+      background: #ff8800;
+      color: #1a1a2a;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background: #ffaa33;
+    }
+    .btn-secondary {
+      background: #2a5a7a;
+    }
+    .btn-secondary:hover {
+      background: #3a7aaa;
+    }
+    .btn-unit {
+      background: #2a2a3a;
+      padding: 4px 14px;
+      font-size: 0.85rem;
+      border-radius: 20px;
+      border: 2px solid #555;
+      min-width: 48px;
+      justify-content: center;
+    }
+    .btn-unit.active {
+      border-color: #ffaa00;
+      background: #4a4a5a;
+      color: #ffaa00;
+    }
+    #math-display {
+      position: absolute;
+      bottom: 120px;
+      right: 30px;
+      background: rgba(10, 10, 20, 0.75);
+      backdrop-filter: blur(5px);
+      padding: 18px 24px;
+      border-radius: 16px;
+      color: #eee;
+      border: 1px solid #ffaa0055;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+      pointer-events: none;
+      z-index: 15;
+      text-align: right;
+      line-height: 1.7;
+      font-size: 1rem;
+      min-width: 160px;
+    }
+    #math-display strong {
+      color: #ffaa66;
+    }
+    #math-display .formula {
+      font-size: 1.2rem;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+      border-top: 1px solid #444;
+      padding-top: 8px;
+      margin-top: 6px;
+    }
+    .unit-selector {
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    @media (max-width: 800px) {
+      #controls { flex-direction: column; align-items: center; gap: 12px; width: 95%; padding: 15px; bottom: 15px; }
+      .control-group { flex-direction: row; flex-wrap: wrap; justify-content: center; width: 100%; }
+      .control-group input[type="range"] { width: 100px; }
+      #action-buttons { border-left: none; padding-left: 0; margin-left: 0; border-top: 1px solid #555; padding-top: 12px; width: 100%; justify-content: center; }
+      #math-display { bottom: 250px; right: 15px; padding: 12px 16px; font-size: 0.9rem; min-width: 120px; }
+      #info { top: 10px; left: 10px; padding: 8px 14px; }
+      #info h1 { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <h1>📦 體積模擬器 · 正方體/長方體</h1>
+    <p>拖曳旋轉 · 滑桿調整 · 逐個/逐層/一鍵填滿</p>
+  </div>
+
+  <div id="math-display">
+    <div>長 <strong id="d-length">4</strong> · 闊 <strong id="d-width">3</strong> · 高 <strong id="d-height">5</strong></div>
+    <div>積木邊長 <strong id="d-unit">1</strong> cm</div>
+    <div class="formula">體積 = <strong id="d-volume">60</strong> 個單位</div>
+  </div>
+
+  <div id="controls">
+    <div class="control-group">
+      <label>📏 長 <span id="val-length">4</span></label>
+      <input type="range" id="slider-length" min="1" max="10" step="1" value="4">
+    </div>
+    <div class="control-group">
+      <label>📐 闊 <span id="val-width">3</span></label>
+      <input type="range" id="slider-width" min="1" max="10" step="1" value="3">
+    </div>
+    <div class="control-group">
+      <label>📏 高 <span id="val-height">5</span></label>
+      <input type="range" id="slider-height" min="1" max="10" step="1" value="5">
+    </div>
+    <div class="control-group">
+      <label>🧊 積木邊長</label>
+      <div class="unit-selector">
+        <button class="btn btn-unit active" data-unit="1">1 cm</button>
+        <button class="btn btn-unit" data-unit="2">2 cm</button>
+      </div>
+    </div>
+    <div id="action-buttons">
+      <button class="btn btn-secondary" id="btn-onebyone">🧱 逐個</button>
+      <button class="btn btn-secondary" id="btn-layer">📚 逐層</button>
+      <button class="btn btn-primary" id="btn-fill">⚡ 一鍵填滿</button>
+      <button class="btn" id="btn-clear" style="background:#6a3a3a;">🗑️ 清空</button>
+    </div>
+  </div>
+
+  <!-- 引入 Three.js 和 OrbitControls -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.126.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.126.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // --- DOM 元素 ---
+    const sliderLength = document.getElementById('slider-length');
+    const sliderWidth = document.getElementById('slider-width');
+    const sliderHeight = document.getElementById('slider-height');
+    const valLength = document.getElementById('val-length');
+    const valWidth = document.getElementById('val-width');
+    const valHeight = document.getElementById('val-height');
+    const dLength = document.getElementById('d-length');
+    const dWidth = document.getElementById('d-width');
+    const dHeight = document.getElementById('d-height');
+    const dUnit = document.getElementById('d-unit');
+    const dVolume = document.getElementById('d-volume');
+
+    const btnOneByOne = document.getElementById('btn-onebyone');
+    const btnLayer = document.getElementById('btn-layer');
+    const btnFill = document.getElementById('btn-fill');
+    const btnClear = document.getElementById('btn-clear');
+    const unitButtons = document.querySelectorAll('.btn-unit');
+
+    // --- Three.js 場景 ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a2e);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(12, 8, 16);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+
+    // 控制器
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.autoRotate = false;
+    controls.target.set(0, 1, 0);
+    controls.update();
+
+    // --- 燈光 ---
+    const ambientLight = new THREE.AmbientLight(0x404060);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffeedd, 1);
+    dirLight.position.set(8, 15, 10);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    const d = 15;
+    dirLight.shadow.camera.left = -d;
+    dirLight.shadow.camera.right = d;
+    dirLight.shadow.camera.top = d;
+    dirLight.shadow.camera.bottom = -d;
+    dirLight.shadow.camera.near = 1;
+    dirLight.shadow.camera.far = 30;
+    scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0x88aaff, 0.4);
+    fillLight.position.set(-5, 3, 8);
+    scene.add(fillLight);
+
+    const backLight = new THREE.DirectionalLight(0xccddff, 0.3);
+    backLight.position.set(-3, -1, -10);
+    scene.add(backLight);
+
+    // 地板網格 (輔助)
+    const gridHelper = new THREE.GridHelper(20, 20, 0x88aaff, 0x446688);
+    gridHelper.position.y = -0.01;
+    scene.add(gridHelper);
+
+    // --- 核心資料 ---
+    let cubesGroup = new THREE.Group();
+    scene.add(cubesGroup);
+
+    // 大盒子線框
+    let boxWireframe = new THREE.LineSegments(new THREE.BoxGeometry(1, 1, 1), new THREE.LineBasicMaterial({ color: 0xffaa00 }));
+    scene.add(boxWireframe);
+
+    // 狀態
+    let state = {
+      length: 4,
+      width: 3,
+      height: 5,
+      unit: 1,
+    };
+
+    let nextIndex = 0;
+    let totalCubesCount = 0;
+    let timeoutIds = [];
+
+    // --- 工具函數 ---
+    function clearAllTimeouts() {
+      timeoutIds.forEach(id => clearTimeout(id));
+      timeoutIds = [];
+    }
+
+    function updateSceneMeta() {
+      const L = state.length;
+      const W = state.width;
+      const H = state.height;
+      const U = state.unit;
+
+      scene.remove(boxWireframe);
+      const boxGeo = new THREE.BoxGeometry(L, H, W);
+      const edges = new THREE.EdgesGeometry(boxGeo);
+      boxWireframe = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffaa00, linewidth: 2 }));
+      boxWireframe.position.set(0, H/2, 0);
+      scene.add(boxWireframe);
+
+      const countX = Math.floor(L / U);
+      const countZ = Math.floor(W / U);
+      const countY = Math.floor(H / U);
+      totalCubesCount = countX * countZ * countY;
+      dLength.textContent = L;
+      dWidth.textContent = W;
+      dHeight.textContent = H;
+      dUnit.textContent = U;
+      dVolume.textContent = totalCubesCount;
+
+      valLength.textContent = L;
+      valWidth.textContent = W;
+      valHeight.textContent = H;
+    }
+
+    function getCubePosition(index) {
+      const L = state.length;
+      const W = state.width;
+      const H = state.height;
+      const U = state.unit;
+
+      const countX = Math.floor(L / U);
+      const countZ = Math.floor(W / U);
+      const countY = Math.floor(H / U);
+
+      if (countX === 0 || countZ === 0 || countY === 0) return null;
+      if (index >= countX * countZ * countY) return null;
+
+      const y = Math.floor(index / (countX * countZ));
+      const remainder = index % (countX * countZ);
+      const z = Math.floor(remainder / countX);
+      const x = remainder % countX;
+
+      const startX = -L / 2 + U / 2;
+      const startZ = -W / 2 + U / 2;
+      const startY = U / 2;
+
+      return {
+        x: startX + x * U,
+        y: startY + y * U,
+        z: startZ + z * U,
+      };
+    }
+
+    function addOneCube() {
+      const pos = getCubePosition(nextIndex);
+      if (!pos) return false;
+
+      const U = state.unit;
+      const color = new THREE.Color(0xff8800);
+      const material = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 0.4,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.85,
+        emissive: new THREE.Color(0x442200),
+        emissiveIntensity: 0.15
+      });
+      
+      const geometry = new THREE.BoxGeometry(U * 0.92, U * 0.92, U * 0.92);
+      const cube = new THREE.Mesh(geometry, material);
+      cube.castShadow = true;
+      cube.receiveShadow = true;
+      cube.position.set(pos.x, pos.y, pos.z);
+      
+      cubesGroup.add(cube);
+      nextIndex++;
+      return true;
+    }
+
+    function addCubeAt(x, y, z, U) {
+      const color = new THREE.Color(0xff8800);
+      const material = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 0.4,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.85,
+        emissive: new THREE.Color(0x442200),
+        emissiveIntensity: 0.15
+      });
+      
+      const geometry = new THREE.BoxGeometry(U * 0.92, U * 0.92, U * 0.92);
+      const cube = new THREE.Mesh(geometry, material);
+      cube.castShadow = true;
+      cube.receiveShadow = true;
+      
+      const startX = -state.length / 2 + U / 2;
+      const startZ = -state.width / 2 + U / 2;
+      const startY = U / 2;
+      
+      cube.position.set(startX + x * U, startY + y * U, startZ + z * U);
+      cubesGroup.add(cube);
+    }
+
+    function fillCubes(mode) {
+      clearAllTimeouts();
+      while(cubesGroup.children.length > 0) {
+        cubesGroup.remove(cubesGroup.children[0]);
+      }
+
+      const L = state.length;
+      const W = state.width;
+      const H = state.height;
+      const U = state.unit;
+
+      const countX = Math.floor(L / U);
+      const countZ = Math.floor(W / U);
+      const countY = Math.floor(H / U);
+
+      if (countX === 0 || countZ === 0 || countY === 0) {
+        updateSceneMeta();
+        nextIndex = 0;
+        return;
+      }
+
+      if (mode === 'onebyone') {
+        nextIndex = 0;
+        updateSceneMeta();
+        return;
+      } else if (mode === 'layer') {
+        const indices = [];
+        for (let y = 0; y < countY; y++) {
+          for (let z = 0; z < countZ; z++) {
+            for (let x = 0; x < countX; x++) {
+              indices.push([x, y, z]);
+            }
+          }
+        }
+        const layers = {};
+        indices.forEach(([x, y, z]) => {
+          if (!layers[y]) layers[y] = [];
+          layers[y].push([x, y, z]);
+        });
+        const layerKeys = Object.keys(layers).sort((a,b)=>a-b);
+        const layerStep = 200;
+        layerKeys.forEach((yKey, idx) => {
+          const id = setTimeout(() => {
+            layers[yKey].forEach(([x, y, z]) => {
+              addCubeAt(x, y, z, U);
+            });
+          }, idx * layerStep);
+          timeoutIds.push(id);
+        });
+        nextIndex = countX * countZ * countY;
+        updateSceneMeta();
+        return;
+      } else { // full
+        for (let y = 0; y < countY; y++) {
+          for (let z = 0; z < countZ; z++) {
+            for (let x = 0; x < countX; x++) {
+              addCubeAt(x, y, z, U);
+            }
+          }
+        }
+        nextIndex = countX * countZ * countY;
+        updateSceneMeta();
+        return;
+      }
+    }
+
+    function clearCubes() {
+      clearAllTimeouts();
+      while(cubesGroup.children.length > 0) {
+        cubesGroup.remove(cubesGroup.children[0]);
+      }
+      nextIndex = 0;
+      updateSceneMeta();
+    }
+
+    // --- 事件綁定 ---
+    function onSliderChange() {
+      state.length = parseInt(sliderLength.value);
+      state.width = parseInt(sliderWidth.value);
+      state.height = parseInt(sliderHeight.value);
+
+      updateSceneMeta();
+      clearAllTimeouts();
+      while(cubesGroup.children.length > 0) {
+        cubesGroup.remove(cubesGroup.children[0]);
+      }
+      nextIndex = 0;
+      fillCubes('full');
+    }
+
+    sliderLength.addEventListener('input', onSliderChange);
+    sliderWidth.addEventListener('input', onSliderChange);
+    sliderHeight.addEventListener('input', onSliderChange);
+
+    // 積木邊長按鈕
+    unitButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        unitButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.unit = parseInt(btn.dataset.unit);
+        
+        updateSceneMeta();
+        clearAllTimeouts();
+        while(cubesGroup.children.length > 0) {
+          cubesGroup.remove(cubesGroup.children[0]);
+        }
+        nextIndex = 0;
+        fillCubes('full');
+      });
+    });
+
+    btnOneByOne.addEventListener('click', () => {
+      const L = state.length;
+      const W = state.width;
+      const H = state.height;
+      const U = state.unit;
+      const countX = Math.floor(L / U);
+      const countZ = Math.floor(W / U);
+      const countY = Math.floor(H / U);
+      const total = countX * countZ * countY;
+
+      if (nextIndex >= total) return;
+      addOneCube();
+      updateSceneMeta();
+    });
+
+    btnLayer.addEventListener('click', () => {
+      clearCubes();
+      fillCubes('layer');
+    });
+    btnFill.addEventListener('click', () => {
+      clearCubes();
+      fillCubes('full');
+    });
+    btnClear.addEventListener('click', () => {
+      clearCubes();
+    });
+
+    window.addEventListener('resize', onWindowResize, false);
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // --- 動畫迴圈 ---
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // --- 初始化 ---
+    state.length = parseInt(sliderLength.value);
+    state.width = parseInt(sliderWidth.value);
+    state.height = parseInt(sliderHeight.value);
+    state.unit = 1;
+    updateSceneMeta();
+    setTimeout(() => {
+      fillCubes('full');
+    }, 100);
+
+    animate();
+
+    console.log('體積模擬器已啟動！');
+  </script>
+</body>
+</html>
