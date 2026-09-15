@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>比大小 · 20以內</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+            padding: 16px;
+            margin: 0;
+        }
+
+        .game-container {
+            max-width: 900px;
+            width: 100%;
+            background: #fef9e8;
+            border-radius: 72px 72px 48px 48px;
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+            padding: 28px 28px 36px;
+            text-align: center;
+            border: 4px solid #f3d37c;
+        }
+
+        .subhead {
+            font-size: 1.5rem;
+            background: #ffeab3;
+            display: inline-block;
+            padding: 10px 32px;
+            border-radius: 60px;
+            color: #3f2b0e;
+            font-weight: 700;
+            box-shadow: inset 0 -3px 0 #bc9b5a, 0 6px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 16px;
+            border: 2px solid #f0c674;
+        }
+
+        /* 圖畫區塊 */
+        .picture-area {
+            background: #d9e9fa;
+            border-radius: 60px;
+            padding: 24px 20px 20px;
+            margin: 8px 0 18px;
+            border: 6px dashed #6f9ed8;
+            box-shadow: inset 0 0 0 6px #b1d0f0, 0 10px 15px -5px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        /* 雙欄圖案對應區域 */
+        .figures {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 8px 0 16px;
+        }
+
+        .figure-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1 1 0;
+            min-width: 120px;
+        }
+
+        .figure-label {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #664d1e;
+            background: #feeac2;
+            padding: 4px 24px;
+            border-radius: 40px;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            border: 2px solid #dbb46a;
+        }
+
+        /* 圖案列表：自動換行排列，容納較多圖案 */
+        .icon-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 4px;
+            max-width: 200px;
+        }
+
+        .icon-item {
+            font-size: 2.4rem;
+            line-height: 1.2;
+            filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.2));
+            transition: transform 0.1s ease;
+            display: block;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .icon-item:hover {
+            transform: scale(1.15);
+        }
+
+        /* 題目顯示：動態顯示「X比Y 大或小」 */
+        .question-text {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #113355;
+            background: #ffffffd9;
+            display: inline-block;
+            padding: 12px 40px;
+            border-radius: 100px;
+            letter-spacing: 4px;
+            box-shadow: 0 4px 0 #7d9ec0;
+            margin: 4px auto 8px;
+            border: 3px solid #b1c9e0;
+            text-shadow: 1px 1px 0 white;
+        }
+
+        /* 分隔圓 */
+        .vs-divider {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #c0392b;
+            background: #ffeaa5;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 0 4px #fef9e8, 0 0 0 8px #d4a373;
+            margin: 0 6px;
+            align-self: center;
+            flex-shrink: 0;
+        }
+
+        .answer-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 36px;
+            margin: 24px 0 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            background: #f7d06e;
+            color: #331f00;
+            font-size: 2.4rem;
+            font-weight: 900;
+            padding: 10px 42px;
+            border-radius: 120px;
+            letter-spacing: 8px;
+            cursor: pointer;
+            box-shadow: 0 12px 0 #a56b1f, 0 8px 18px rgba(0, 0, 0, 0.25);
+            transition: all 0.06s ease-in;
+            border: 3px solid #ffeac2;
+            text-shadow: 2px 2px 0 #ffe19e;
+            flex: 0 1 auto;
+            min-width: 180px;
+            font-family: inherit;
+        }
+
+        .btn:active {
+            transform: translateY(7px);
+            box-shadow: 0 5px 0 #a56b1f, 0 8px 18px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: translateY(4px);
+            box-shadow: 0 8px 0 #a56b1f;
+        }
+
+        .btn.small-btn {
+            background: #b0d0f0;
+            box-shadow: 0 10px 0 #5d7fa3, 0 6px 14px rgba(0, 0, 0, 0.2);
+            color: #0d2c4b;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            padding: 8px 24px;
+            min-width: 140px;
+            border: 3px solid #e2f0ff;
+            text-shadow: 2px 2px 0 #c2ddff;
+        }
+
+        .btn.small-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 4px 0 #5d7fa3;
+        }
+
+        .feedback {
+            font-size: 1.8rem;
+            font-weight: 800;
+            min-height: 4rem;
+            margin: 10px 0 4px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            transition: 0.2s;
+            color: #2b4f2b;
+        }
+
+        .feedback.correct {
+            color: #0b6e0b;
+            text-shadow: 0 0 8px #b3ffb3;
+        }
+
+        .feedback.wrong {
+            color: #b32b2b;
+            text-shadow: 0 0 8px #ffb3b3;
+        }
+
+        .counter {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #5f4a2b;
+            background: #f2e2c6;
+            display: inline-block;
+            padding: 8px 32px;
+            border-radius: 40px;
+            margin-top: 6px;
+            border: 2px solid #c7aa7a;
+        }
+
+        .next-btn-wrapper {
+            margin-top: 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .footer-note {
+            margin-top: 22px;
+            font-size: 1rem;
+            color: #78613c;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        /* 動畫效果 */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .icon-item.pop {
+            animation: pop 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease;
+        }
+
+        /* 適應小螢幕 */
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 18px 12px 24px;
+                border-radius: 48px 48px 32px 32px;
+            }
+
+            .subhead {
+                font-size: 1.1rem;
+                padding: 8px 20px;
+            }
+
+            .question-text {
+                font-size: 1.6rem;
+                padding: 8px 24px;
+                letter-spacing: 2px;
+            }
+
+            .figures {
+                gap: 8px;
+            }
+
+            .figure-column {
+                min-width: 80px;
+            }
+
+            .icon-item {
+                font-size: 1.8rem;
+            }
+
+            .icon-list {
+                max-width: 140px;
+            }
+
+            .vs-divider {
+                width: 44px;
+                height: 44px;
+                font-size: 1.4rem;
+                margin: 0 2px;
+            }
+
+            .btn {
+                font-size: 1.8rem;
+                padding: 8px 24px;
+                letter-spacing: 4px;
+                min-width: 130px;
+            }
+
+            .btn.small-btn {
+                font-size: 1.4rem;
+                padding: 6px 18px;
+                min-width: 110px;
+            }
+
+            .feedback {
+                font-size: 1.4rem;
+            }
+
+            .counter {
+                font-size: 1.2rem;
+                padding: 6px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="subhead">🔢 20以內 · 比大小 🔢</div>
+
+        <!-- 圖畫區塊：圖案一一對應 -->
+        <div class="picture-area">
+            <div class="figures" id="figuresContainer">
+                <!-- 左邊圖案柱 -->
+                <div class="figure-column left-column">
+                    <div class="figure-label" id="leftLabel">3 個</div>
+                    <div class="icon-list" id="leftGroup">
+                        <!-- 動態生成圖案 -->
+                    </div>
+                </div>
+
+                <!-- 分隔 -->
+                <div class="vs-divider">VS</div>
+
+                <!-- 右邊圖案柱 -->
+                <div class="figure-column right-column">
+                    <div class="figure-label" id="rightLabel">5 個</div>
+                    <div class="icon-list" id="rightGroup">
+                        <!-- 動態生成圖案 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 題目動態顯示「X比Y 大或小」 -->
+            <div class="question-text" id="questionText">3比5 大或小</div>
+        </div>
+
+        <!-- 答題按鈕 -->
+        <div class="answer-buttons">
+            <button class="btn" id="bigBtn">大</button>
+            <button class="btn" id="smallBtn">小</button>
+        </div>
+
+        <!-- 反饋訊息 -->
+        <div class="feedback" id="feedbackMsg">👆 點「大」或「小」回答</div>
+
+        <!-- 下一題按鈕 & 計數器 -->
+        <div class="next-btn-wrapper">
+            <button class="btn small-btn" id="nextBtn">下一題 ▶</button>
+        </div>
+        <div class="counter" id="counterDisplay">第 1 題</div>
+        <div class="footer-note">✨ 看圖數一數，選出正確答案 ✨</div>
+    </div>
+
+    <script>
+        (function() {
+            // ========== 遊戲設定 ==========
+            // 數字範圍：1 ~ 20
+            const MIN_NUM = 1;
+            const MAX_NUM = 20;
+
+            // 圖案主題庫（每題隨機選一組）
+            const THEMES = [
+                { name: 'apple', icon: '🍎' },
+                { name: 'star', icon: '⭐' },
+                { name: 'bear', icon: '🐻' },
+                { name: 'flower', icon: '🌸' },
+                { name: 'car', icon: '🚗' },
+                { name: 'cat', icon: '🐱' },
+                { name: 'fish', icon: '🐟' },
+                { name: 'ball', icon: '⚽' },
+                { name: 'icecream', icon: '🍦' },
+                { name: 'pizza', icon: '🍕' },
+                { name: 'rocket', icon: '🚀' },
+                { name: 'gift', icon: '🎁' },
+                { name: 'heart', icon: '❤️' },
+                { name: 'sun', icon: '☀️' },
+                { name: 'moon', icon: '🌙' },
+                { name: 'rainbow', icon: '🌈' }
+            ];
+
+            // 遊戲狀態
+            let currentTheme = THEMES[0];
+            let leftNum = 3;
+            let rightNum = 5;
+            let leftIcons = [];
+            let rightIcons = [];
+            let questionCount = 1;
+            let hasAnswered = false;
+            let currentCorrect = '小'; // 正確答案：'大' 或 '小'
+            let score = 0;
+
+            // DOM 元素
+            const leftGroupEl = document.getElementById('leftGroup');
+            const rightGroupEl = document.getElementById('rightGroup');
+            const leftLabelEl = document.getElementById('leftLabel');
+            const rightLabelEl = document.getElementById('rightLabel');
+            const feedbackEl = document.getElementById('feedbackMsg');
+            const counterEl = document.getElementById('counterDisplay');
+            const bigBtn = document.getElementById('bigBtn');
+            const smallBtn = document.getElementById('smallBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const questionTextEl = document.getElementById('questionText');
+
+            // ========== 輔助函式 ==========
+            function getRandomTheme() {
+                const randomIndex = Math.floor(Math.random() * THEMES.length);
+                return THEMES[randomIndex];
+            }
+
+            // 產生 1~20 的隨機整數
+            function getRandomNumber() {
+                return Math.floor(Math.random() * MAX_NUM) + MIN_NUM;
+            }
+
+            // 產生一組不相等且都在 20 以內的數字
+            function generateNumbers() {
+                let a = getRandomNumber();
+                let b = getRandomNumber();
+                // 確保兩個數字不相等（若相等則重新產生）
+                while (a === b) {
+                    b = getRandomNumber();
+                }
+                return { left: a, right: b };
+            }
+
+            function generateIcons(theme, count) {
+                const icons = [];
+                for (let i = 0; i < count; i++) {
+                    icons.push(theme.icon);
+                }
+                return icons;
+            }
+
+            // 渲染圖案（自動換行排列，容納多個圖案）
+            function renderIcons() {
+                leftGroupEl.innerHTML = '';
+                rightGroupEl.innerHTML = '';
+
+                leftIcons.forEach(icon => {
+                    const span = document.createElement('span');
+                    span.className = 'icon-item';
+                    span.textContent = icon;
+                    leftGroupEl.appendChild(span);
+                });
+
+                rightIcons.forEach(icon => {
+                    const span = document.createElement('span');
+                    span.className = 'icon-item';
+                    span.textContent = icon;
+                    rightGroupEl.appendChild(span);
+                });
+
+                leftLabelEl.textContent = `${leftNum} 個`;
+                rightLabelEl.textContent = `${rightNum} 個`;
+            }
+
+            // 載入新題目
+            function loadNewQuestion() {
+                // 1. 隨機產生兩個 20 以內的數字（不相等）
+                const nums = generateNumbers();
+                leftNum = nums.left;
+                rightNum = nums.right;
+
+                // 2. 決定正確答案
+                currentCorrect = (leftNum > rightNum) ? '大' : '小';
+
+                // 3. 選擇隨機主題
+                currentTheme = getRandomTheme();
+
+                // 4. 根據數字產生對應數量的圖案
+                leftIcons = generateIcons(currentTheme, leftNum);
+                rightIcons = generateIcons(currentTheme, rightNum);
+
+                // 5. 渲染
+                renderIcons();
+
+                // 6. 更新題目文字：「X比Y 大或小」
+                questionTextEl.textContent = `${leftNum}比${rightNum} 大或小`;
+
+                // 7. 重置回答狀態
+                hasAnswered = false;
+
+                // 8. 清除反饋訊息
+                feedbackEl.textContent = '👆 點「大」或「小」回答';
+                feedbackEl.className = 'feedback';
+
+                // 9. 更新計數器
+                counterEl.textContent = `第 ${questionCount} 題`;
+
+                // 10. 啟用按鈕
+                bigBtn.disabled = false;
+                smallBtn.disabled = false;
+                bigBtn.style.opacity = '1';
+                smallBtn.style.opacity = '1';
+            }
+
+            // 處理答案
+            function handleAnswer(choice) {
+                if (hasAnswered) return;
+                hasAnswered = true;
+
+                const isCorrect = (choice === currentCorrect);
+
+                if (isCorrect) {
+                    score++;
+                    let explanation = '';
+                    if (leftNum > rightNum) {
+                        explanation = `${leftNum} 比 ${rightNum} 大，所以是「大」！`;
+                    } else {
+                        explanation = `${leftNum} 比 ${rightNum} 小，所以是「小」！`;
+                    }
+                    feedbackEl.textContent = `✅ 答對了！${explanation}  (得分: ${score})`;
+                    feedbackEl.className = 'feedback correct';
+
+                    const correctBtn = (choice === '大') ? bigBtn : smallBtn;
+                    correctBtn.classList.add('pop');
+                    setTimeout(() => correctBtn.classList.remove('pop'), 300);
+
+                    document.querySelectorAll('.icon-item').forEach((el, i) => {
+                        setTimeout(() => {
+                            el.classList.add('pop');
+                            setTimeout(() => el.classList.remove('pop'), 300);
+                        }, i * 30);
+                    });
+                } else {
+                    let correctAnswer = (leftNum > rightNum) ? '大' : '小';
+                    let explanation = '';
+                    if (leftNum > rightNum) {
+                        explanation = `${leftNum} 比 ${rightNum} 大，應該選「大」喔！`;
+                    } else {
+                        explanation = `${leftNum} 比 ${rightNum} 小，應該選「小」喔！`;
+                    }
+                    feedbackEl.textContent = `❌ 再想想～ ${explanation}  (得分: ${score})`;
+                    feedbackEl.className = 'feedback wrong';
+
+                    const wrongBtn = (choice === '大') ? bigBtn : smallBtn;
+                    wrongBtn.classList.add('shake');
+                    setTimeout(() => wrongBtn.classList.remove('shake'), 300);
+                }
+
+                bigBtn.disabled = true;
+                smallBtn.disabled = true;
+                bigBtn.style.opacity = '0.6';
+                smallBtn.style.opacity = '0.6';
+            }
+
+            // 下一題
+            function nextQuestion() {
+                questionCount += 1;
+                loadNewQuestion();
+            }
+
+            // ========== 初始化 ==========
+            function initGame() {
+                // 初始題目：3 比 5
+                leftNum = 3;
+                rightNum = 5;
+                currentCorrect = '小';
+                currentTheme = THEMES[0]; // 蘋果
+
+                leftIcons = generateIcons(currentTheme, leftNum);
+                rightIcons = generateIcons(currentTheme, rightNum);
+                renderIcons();
+
+                hasAnswered = false;
+                feedbackEl.textContent = '👆 點「大」或「小」回答';
+                feedbackEl.className = 'feedback';
+                counterEl.textContent = `第 1 題`;
+                questionTextEl.textContent = `${leftNum}比${rightNum} 大或小`;
+
+                bigBtn.disabled = false;
+                smallBtn.disabled = false;
+                bigBtn.style.opacity = '1';
+                smallBtn.style.opacity = '1';
+
+                // 事件綁定
+                bigBtn.addEventListener('click', () => handleAnswer('大'));
+                smallBtn.addEventListener('click', () => handleAnswer('小'));
+                nextBtn.addEventListener('click', nextQuestion);
+
+                // 鍵盤支援
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === '1' && !bigBtn.disabled) handleAnswer('大');
+                    if (e.key === '2' && !smallBtn.disabled) handleAnswer('小');
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        nextQuestion();
+                    }
+                });
+            }
+
+            initGame();
+        })();
+    </script>
+</body>
+</html>
