@@ -13,7 +13,7 @@
   }
 
   html, body {
-    touch-action: manipulation; /* 允许点击，但禁止双指缩放/双击缩放 */
+    touch-action: manipulation; /* 允許點擊，但禁止雙指縮放/雙擊縮放 */
   }
 
   body {
@@ -86,7 +86,7 @@
     padding: 20px;
     border-radius: 20px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    touch-action: none; /* 防止拖动座位表时滚动页面 */
+    touch-action: none; /* 防止拖動座位表時滾動頁面 */
   }
 
   .seat-table td {
@@ -137,7 +137,7 @@
     cursor: pointer;
     border: 3px dashed rgba(0, 0, 0, 0.08);
     margin: 0 auto;
-    touch-action: none; /* 禁止触摸滚动/缩放 */
+    touch-action: none; /* 禁止觸摸滾動/縮放 */
     position: relative;
   }
 
@@ -162,9 +162,9 @@
     justify-content: center;
     width: 100%;
     height: 100%;
-    touch-action: none; /* 关键：允许拖动而不滚动页面 */
-    -webkit-user-drag: none; /* 禁用原生拖拽图片行为 */
-    pointer-events: auto; /* 确保可以触摸 */
+    touch-action: none; /* 關鍵：允許拖動而不滾動頁面 */
+    -webkit-user-drag: none; /* 禁用原生拖拽圖片行為 */
+    pointer-events: auto; /* 確保可以觸摸 */
   }
 
   .student:active {
@@ -353,7 +353,7 @@
     letter-spacing: 5px;
   }
 
-  /* 移动端优化 */
+  /* 移動端優化 */
   @media (max-width: 768px) {
     body { padding: 10px; }
     h1 { font-size: 26px; }
@@ -482,7 +482,6 @@
         seat.dataset.col = col;
         seat.id = `seat-${visualRow + 1}-${col}`;
 
-        // pointer 事件用于放置检测（只监听 pointerup，不阻止冒泡）
         td.appendChild(seat);
         tr.appendChild(td);
       }
@@ -544,20 +543,17 @@
     el.className = 'student';
     el.textContent = student.emoji;
     el.dataset.studentId = student.id;
-    // 不使用 draggable，改用 pointer 事件
     el.addEventListener('pointerdown', handlePointerDown);
     return el;
   }
 
-  // ====== Pointer 拖曳核心逻辑 ======
+  // ====== Pointer 拖曳核心邏輯 ======
   function handlePointerDown(e) {
-    // 只响应主按键或触摸
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     const studentEl = e.currentTarget.closest('.student');
     if (!studentEl) return;
 
     e.preventDefault();
-    // 阻止页面滚动（在 student 上已设置 touch-action: none，这里再确保）
     if (e.cancelable) e.preventDefault();
 
     const studentId = studentEl.dataset.studentId;
@@ -571,7 +567,6 @@
       col = parseInt(seat.dataset.col);
     }
 
-    // 记录拖拽状态
     dragState = {
       studentId,
       from,
@@ -585,10 +580,8 @@
       originalParent: studentEl.parentNode,
     };
 
-    // 添加拖动样式
     studentEl.classList.add('dragging');
 
-    // 绑定全局 pointermove / pointerup
     document.addEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointerup', handlePointerUp);
     document.addEventListener('pointercancel', handlePointerUp);
@@ -602,10 +595,8 @@
     const dy = e.clientY - dragState.startY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // 如果移动距离超过 5px，才开始视为拖拽，并创建 ghost 元素
     if (!dragState.moved && distance > 5) {
       dragState.moved = true;
-      // 创建 ghost 跟随手指
       const student = students.find(s => s.id === dragState.studentId);
       const ghost = document.createElement('div');
       ghost.className = 'student';
@@ -624,21 +615,17 @@
       document.body.appendChild(ghost);
       dragState.ghostEl = ghost;
 
-      // 隐藏原始元素
       if (dragState.originalEl) {
         dragState.originalEl.style.opacity = '0.3';
       }
     }
 
-    // 更新 ghost 位置
     if (dragState.ghostEl) {
       dragState.ghostEl.style.left = e.clientX + 'px';
       dragState.ghostEl.style.top = e.clientY + 'px';
     }
 
-    // 高亮当前悬停的元素
     if (dragState.moved) {
-      // 移除所有高亮
       document.querySelectorAll('.seat.over, .waiting-slot.over').forEach(el => el.classList.remove('over'));
       const elemUnder = document.elementFromPoint(e.clientX, e.clientY);
       if (elemUnder) {
@@ -659,27 +646,22 @@
 
     const { studentId, ghostEl, moved, originalEl } = dragState;
 
-    // 清理 ghost
     if (ghostEl) {
       ghostEl.remove();
     }
 
-    // 移除高亮
     document.querySelectorAll('.seat.over, .waiting-slot.over').forEach(el => el.classList.remove('over'));
 
-    // 恢复原始元素透明度
     if (originalEl) {
       originalEl.style.opacity = '';
       originalEl.classList.remove('dragging');
     }
 
-    // 如果没有移动，视为点击，不进行任何操作
     if (!moved) {
       dragState = null;
       return;
     }
 
-    // 获取手指下方的元素
     const elemUnder = document.elementFromPoint(e.clientX, e.clientY);
     if (!elemUnder) {
       dragState = null;
@@ -696,30 +678,24 @@
       autoCheckAnswer();
     } else if (targetWaiting) {
       moveStudentToWaiting(studentId);
-    } else {
-      // 拖到空白区域，可以放回待选区（可选）
-      // moveStudentToWaiting(studentId);
     }
 
     dragState = null;
   }
 
-  // ====== 移动学生（适配新的拖拽逻辑） ======
+  // ====== 移動學生 ======
   function moveStudentToSeat(studentId, row, col) {
     const student = students.find(s => s.id === studentId);
     if (!student) return;
 
-    // 检查目标座位是否已有学生
     const targetSeat = document.querySelector(`#seat-${row}-${col}`);
     if (!targetSeat) return;
 
     const existingEl = targetSeat.querySelector('.student');
     if (existingEl) {
-      // 将原有学生移回待选区
       moveStudentToWaiting(existingEl.dataset.studentId);
     }
 
-    // 从原位置移除
     if (dragState && dragState.from === 'seat') {
       const oldSeat = document.querySelector(`#seat-${dragState.row}-${dragState.col}`);
       if (oldSeat) {
@@ -729,7 +705,6 @@
         if (oldMark) oldMark.remove();
       }
     } else {
-      // 从待选区移除
       const oldSlot = document.querySelector(`.waiting-slot[data-student-id="${studentId}"]`);
       if (oldSlot) {
         const oldStudent = oldSlot.querySelector('.student');
@@ -737,11 +712,9 @@
       }
     }
 
-    // 移除目标座位上的旧标记
     const oldMark = targetSeat.querySelector('.mark');
     if (oldMark) oldMark.remove();
 
-    // 在目标座位创建新学生元素
     const newStudentEl = createStudentEl(student);
     targetSeat.appendChild(newStudentEl);
 
@@ -754,7 +727,6 @@
     const student = students.find(s => s.id === studentId);
     if (!student) return;
 
-    // 如果之前在座位上，清除座位上的元素和标记
     if (placedStudents[studentId]) {
       const { row, col } = placedStudents[studentId];
       const seat = document.querySelector(`#seat-${row}-${col}`);
@@ -767,7 +739,6 @@
       delete placedStudents[studentId];
     }
 
-    // 将学生放回待选区的空位
     const existingSlot = document.querySelector(`.waiting-slot[data-student-id="${studentId}"]`);
     if (existingSlot && !existingSlot.querySelector('.student')) {
       const studentEl = createStudentEl(student);
@@ -775,22 +746,22 @@
     }
   }
 
-  // ====== 出题 ======
+  // ====== 出題 ======
   function newQuestion() {
     document.querySelectorAll('.mark').forEach(m => m.remove());
     feedback.textContent = '';
     feedback.className = 'feedback';
 
     const randomStudent = students[Math.floor(Math.random() * students.length)];
-    const qRow = Math.floor(Math.random() * TOTAL_ROWS) + 1;
-    const qCol = Math.floor(Math.random() * TOTAL_COLS) + 1;
+    const qCol = Math.floor(Math.random() * TOTAL_COLS) + 1; // 幾行
+    const qRow = Math.floor(Math.random() * TOTAL_ROWS) + 1; // 第幾個
 
     currentQuestion = { studentId: randomStudent.id, row: qRow, col: qCol };
 
-    questionBox.innerHTML = `請把 <span class="highlight">${randomStudent.emoji} ${randomStudent.name}</span> 放在 <span class="highlight">第 ${qRow} 行 第 ${qCol} 個</span> 座位`;
+    questionBox.innerHTML = `請把 <span class="highlight">${randomStudent.emoji} ${randomStudent.name}</span> 放在 <span class="highlight">第 ${qCol} 行 第 ${qRow} 個</span> 座位`;
   }
 
-  // ====== 自动检查答案 ======
+  // ====== 自動檢查答案 ======
   function autoCheckAnswer() {
     if (!currentQuestion) return;
 
@@ -803,10 +774,8 @@
 
     if (!placed) return;
 
-    const targetRow = qCol;
-    const targetCol = qRow;
-
-    if (placed.row === targetRow && placed.col === targetCol) {
+    // 比對邏輯：列數(row)對應「第幾個」，欄數(col)對應「第幾行」
+    if (placed.row === qRow && placed.col === qCol) {
       const seat = document.querySelector(`#seat-${placed.row}-${placed.col}`);
       const mark = document.createElement('span');
       mark.className = 'mark';
@@ -843,7 +812,7 @@
     progress.textContent = correctStreak > 0 ? `連續答對：${stars}` : '';
   }
 
-  // ====== 重设 ======
+  // ====== 重設 ======
   function resetAll() {
     currentQuestion = null;
     placedStudents = {};
@@ -858,31 +827,27 @@
     });
 
     document.querySelectorAll('.mark').forEach(m => m.remove());
-
-    // 移除可能残留的 ghost
     document.querySelectorAll('.student[style*="position: fixed"]').forEach(el => el.remove());
 
     initWaitingArea();
   }
 
-  // ====== 事件绑定 ======
+  // ====== 事件綁定 ======
   document.getElementById('btnNewQ').addEventListener('click', newQuestion);
   document.getElementById('btnReset').addEventListener('click', resetAll);
   document.getElementById('btnPlayAgain').addEventListener('click', resetAll);
 
-  // ====== 启动 ======
+  // ====== 啟動 ======
   redrawTable();
   initWaitingArea();
   updateProgress();
 
-  // 防止页面因触摸拖拽而滚动（额外保险）
   document.addEventListener('touchmove', (e) => {
     if (dragState && dragState.moved) {
       e.preventDefault();
     }
   }, { passive: false });
 
-  // 阻止鼠标拖拽图片/文字选择
   document.addEventListener('dragstart', (e) => e.preventDefault());
 </script>
 </body>
