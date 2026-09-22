@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>班級離開課室登記系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    /* Dynamic border pulse animation for active outgoing students */
+    @keyframes pulse-active {
+      0%, 100% { border-color: rgba(225, 29, 72, 0.9); box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.35); }
+      50% { border-color: rgba(190, 18, 60, 1); box-shadow: 0 0 0 8px rgba(225, 29, 72, 0.15); }
+    }
+    .status-pulse {
+      animation: pulse-active 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 pb-12">
+
+  <header class="bg-slate-800 text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="bg-amber-500 p-2.5 rounded-xl text-slate-900 font-extrabold shadow-inner">
+          <span class="text-3xl">🚪</span>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black tracking-tight">學生離開課室登記系統</h1>
+          <p class="text-slate-300 text-xs sm:text-sm font-medium">全校 6 個年級 × 4 班 (共 24 班) · 每班 26 人</p>
+        </div>
+      </div>
+
+      <!-- Class & Grade Selector Toolbar -->
+      <div class="flex flex-wrap items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-700">
+        <div class="flex items-center gap-2">
+          <label for="gradeSelect" class="text-xs sm:text-sm font-bold text-slate-200 pl-1">級別:</label>
+          <select id="gradeSelect" onchange="onGradeChange()" class="bg-white text-slate-900 font-extrabold py-2 px-3 rounded-lg text-base border-2 border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400">
+            <option value="1">一年級 (P.1)</option>
+            <option value="2">二年級 (P.2)</option>
+            <option value="3">三年級 (P.3)</option>
+            <option value="4">四年級 (P.4)</option>
+            <option value="5">五年級 (P.5)</option>
+            <option value="6">六年級 (P.6)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label for="classSelect" class="text-xs sm:text-sm font-bold text-slate-200">班別:</label>
+          <select id="classSelect" onchange="onClassChange()" class="bg-white text-slate-900 font-extrabold py-2 px-3.5 rounded-lg text-lg border-2 border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400">
+            <!-- Dynamic Options -->
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+
+    <!-- Status Bar & Controls -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+      
+      <!-- Live Counter -->
+      <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+        <div class="flex items-center gap-3">
+          <span id="currentClassBadge" class="bg-slate-800 text-amber-400 border-2 border-slate-700 font-black text-2xl px-4 py-1.5 rounded-xl shadow-sm">
+            1A
+          </span>
+          <div>
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">班級狀態即時統計</div>
+            <div class="text-sm font-extrabold text-slate-700">
+              在課室內: <span id="inCount" class="text-emerald-600 font-black text-xl">26</span> 人 | 
+              離開課室: <span id="outCount" class="text-rose-600 font-black text-xl">0</span> 人
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export & Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+        <button onclick="exportCurrentClassCSV()" class="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-xl shadow-sm transition-all text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          匯出本班 Excel
+        </button>
+
+        <button onclick="exportAllClassesCSV()" class="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-2.5 px-4 rounded-xl shadow-sm transition-all text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+          匯出全校總表
+        </button>
+
+        <button onclick="clearCurrentLogs()" class="inline-flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-2.5 px-3.5 rounded-xl transition-all text-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          清除記錄
+        </button>
+      </div>
+    </div>
+
+    <!-- Student Cards Grid -->
+    <section>
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h2 class="text-lg font-black text-slate-700 flex items-center gap-2">
+          <span>全班學生列表 (26人)</span>
+          <span class="text-xs font-bold text-slate-500 bg-slate-200/80 px-2.5 py-0.5 rounded-full">按一下「離開課室」，再按一下「返回」</span>
+        </h2>
+        <span class="text-xs font-semibold text-slate-500">提示：特大字號座號方便遠距離識別</span>
+      </div>
+
+      <!-- 26 Student Grid Container -->
+      <div id="studentGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4">
+        <!-- Rendered via JavaScript -->
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+        <div>
+          <h3 id="logTitle" class="text-lg font-black text-slate-800">1A 班 - 今日離開課室紀錄 Log</h3>
+          <p class="text-xs text-slate-500 mt-0.5">系統自動儲存記錄於瀏覽器中，保留最少一天以上</p>
+        </div>
+        <div class="text-xs font-semibold text-slate-400">最新紀錄置頂</div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+              <th class="py-3 px-4">日期</th>
+              <th class="py-3 px-4">班別</th>
+              <th class="py-3 px-4">座號／學生</th>
+              <th class="py-3 px-4">離開時間</th>
+              <th class="py-3 px-4">回來時間</th>
+              <th class="py-3 px-4">總耗時</th>
+              <th class="py-3 px-4">目前狀態</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody" class="divide-y divide-slate-100">
+            <!-- Logs rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white font-semibold px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 z-50 pointer-events-none">
+    <span id="toastIcon" class="text-xl">✅</span>
+    <span id="toastMsg" class="text-sm">通知訊息</span>
+  </div>
+
+  <script>
+    const TOTAL_STUDENTS = 26;
+    const UNIFORM_ICON = '🧑‍🎓'; // Uniform Student Icon
+    let currentGrade = '1';
+    let currentClassLetter = 'A';
+    let currentClassKey = '1A';
+
+    // Global persistent state objects
+    let studentsState = {}; // { '1A': [ { id, number, isOut, lastOutTime }, ... ] }
+    let logsState = {};     // { '1A': [ { id, date, classKey, studentNum, name, outTime, inTime, duration, startTimestamp, status }, ... ] }
+
+    // Live timer update handler
+    let timerInterval = null;
+
+    window.onload = function() {
+      initClassSelector();
+      loadAllFromStorage();
+      renderApp();
+
+      // Refresh duration counters every second for active outgoing students
+      timerInterval = setInterval(updateActiveTimers, 1000);
+    };
+
+    function initClassSelector() {
+      const gradeSelect = document.getElementById('gradeSelect');
+      currentGrade = gradeSelect.value || '1';
+      populateClassOptions();
+    }
+
+    function populateClassOptions() {
+      const classSelect = document.getElementById('classSelect');
+      classSelect.innerHTML = ['A', 'B', 'C', 'D'].map(letter => {
+        const val = `${currentGrade}${letter}`;
+        return `<option value="${letter}">${val} 班</option>`;
+      }).join('');
+
+      currentClassLetter = classSelect.value || 'A';
+      currentClassKey = `${currentGrade}${currentClassLetter}`;
+    }
+
+    function onGradeChange() {
+      currentGrade = document.getElementById('gradeSelect').value;
+      populateClassOptions();
+      switchCurrentClass();
+    }
+
+    function onClassChange() {
+      currentClassLetter = document.getElementById('classSelect').value;
+      currentClassKey = `${currentGrade}${currentClassLetter}`;
+      switchCurrentClass();
+    }
+
+    function switchCurrentClass() {
+      ensureClassDataExists(currentClassKey);
+      renderApp();
+    }
+
+    function loadAllFromStorage() {
+      try {
+        const savedStudents = localStorage.getItem('classroom_leave_students_data');
+        const savedLogs = localStorage.getItem('classroom_leave_logs_data');
+
+        if (savedStudents) studentsState = JSON.parse(savedStudents);
+        if (savedLogs) logsState = JSON.parse(savedLogs);
+      } catch(e) {
+        console.error('LocalStorage read error:', e);
+      }
+      ensureClassDataExists(currentClassKey);
+    }
+
+    function saveAllToStorage() {
+      try {
+        localStorage.setItem('classroom_leave_students_data', JSON.stringify(studentsState));
+        localStorage.setItem('classroom_leave_logs_data', JSON.stringify(logsState));
+      } catch(e) {
+        console.error('LocalStorage write error:', e);
+      }
+    }
+
+    function ensureClassDataExists(classKey) {
+      if (!logsState[classKey]) {
+        logsState[classKey] = [];
+      }
+
+      if (!studentsState[classKey]) {
+        const arr = [];
+        for (let i = 1; i <= TOTAL_STUDENTS; i++) {
+          const numFormatted = String(i).padStart(2, '0');
+          arr.push({
+            id: i,
+            number: numFormatted,
+            numVal: i,
+            name: `${i}號學生`,
+            icon: UNIFORM_ICON,
+            isOut: false,
+            lastOutTime: null
+          });
+        }
+        studentsState[classKey] = arr;
+      }
+    }
+
+    function toggleStudentState(studentId) {
+      ensureClassDataExists(currentClassKey);
+      const list = studentsState[currentClassKey];
+      const student = list.find(s => s.id === studentId);
+      if (!student) return;
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('zh-HK', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateStr = now.toLocaleDateString('zh-HK');
+
+      if (!student.isOut) {
+        // LEAVE CLASSROOM ACTION
+        student.isOut = true;
+        student.lastOutTime = timeStr;
+
+        const newLog = {
+          id: Date.now(),
+          classKey: currentClassKey,
+          studentNum: student.numVal,
+          name: `${student.numVal}號`,
+          date: dateStr,
+          outTime: timeStr,
+          inTime: '--',
+          duration: '進行中 (00:00)',
+          startTimestamp: now.getTime(),
+          status: '離開課室中'
+        };
+
+        logsState[currentClassKey].unshift(newLog);
+        showToast(`🚪 ${student.numVal}號學生 已離開課室 (${timeStr})`, '🚪');
+      } else {
+        // RETURN TO CLASSROOM ACTION
+        student.isOut = false;
+        
+        const activeLog = logsState[currentClassKey].find(l => l.studentNum === student.numVal && l.inTime === '--');
+        if (activeLog) {
+          activeLog.inTime = timeStr;
+          activeLog.status = '已返回課室';
+
+          // Calculate final duration
+          const diffMs = now.getTime() - activeLog.startTimestamp;
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffSecs = Math.floor((diffMs % 60000) / 1000);
+          
+          if (diffMins > 0) {
+            activeLog.duration = `${diffMins} 分 ${diffSecs} 秒`;
+          } else {
+            activeLog.duration = `${diffSecs} 秒`;
+          }
+        }
+        student.lastOutTime = null;
+        showToast(`✅ ${student.numVal}號學生 已返回課室`, '✅');
+      }
+
+      saveAllToStorage();
+      renderApp();
+    }
+
+    function updateActiveTimers() {
+      if (!logsState[currentClassKey]) return;
+      const now = Date.now();
+      let needsRender = false;
+
+      logsState[currentClassKey].forEach(log => {
+        if (log.status === '離開課室中') {
+          const diffMs = now - log.startTimestamp;
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffSecs = Math.floor((diffMs % 60000) / 1000);
+          
+          const formattedMins = String(diffMins).padStart(2, '0');
+          const formattedSecs = String(diffSecs).padStart(2, '0');
+          log.duration = `進行中 (${formattedMins}:${formattedSecs})`;
+          needsRender = true;
+        }
+      });
+
+      if (needsRender) {
+        renderLogTableOnly();
+      }
+    }
+
+    function renderApp() {
+      // 1. Update Header Badge and Counter Numbers
+      document.getElementById('currentClassBadge').innerText = currentClassKey;
+      document.getElementById('logTitle').innerText = `${currentClassKey} 班 - 離開課室紀錄 Log`;
+
+      ensureClassDataExists(currentClassKey);
+      const studentList = studentsState[currentClassKey];
+
+      const outCount = studentList.filter(s => s.isOut).length;
+      const inCount = TOTAL_STUDENTS - outCount;
+
+      document.getElementById('inCount').innerText = inCount;
+      document.getElementById('outCount').innerText = outCount;
+
+      // 2. Render Student Cards Grid with EXTRA LARGE student numbers
+      const grid = document.getElementById('studentGrid');
+      grid.innerHTML = studentList.map(s => {
+        const isOut = s.isOut;
+        return `
+          <div onclick="toggleStudentState(${s.id})" 
+               class="relative flex flex-col items-center justify-between p-3.5 rounded-2xl border-4 transition-all duration-150 cursor-pointer select-none
+               ${isOut 
+                 ? 'bg-rose-50 border-rose-600 text-rose-950 status-pulse scale-[1.02] shadow-lg' 
+                 : 'bg-white border-slate-200 hover:border-amber-500 text-slate-800 hover:shadow-md active:scale-95'}"
+          >
+            <!-- Badge Header -->
+            <div class="w-full flex justify-between items-center mb-1">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full ${isOut ? 'bg-rose-600 text-white' : 'bg-emerald-100 text-emerald-800'}">
+                ${isOut ? '離課室' : '在課室'}
+              </span>
+              <span class="text-2xl">${s.icon}</span>
+            </div>
+
+            <!-- EXTRA LARGE HIGH-CONTRAST STUDENT NUMBER -->
+            <div class="my-1 text-center">
+              <div class="text-4xl sm:text-5xl font-black tracking-tight leading-none ${isOut ? 'text-rose-600' : 'text-slate-900'}">
+                ${s.number}
+              </div>
+              <div class="text-xs font-bold text-slate-400 mt-1">號學生</div>
+            </div>
+
+            <!-- Card Bottom Time Info -->
+            <div class="w-full text-center mt-2 pt-1.5 border-t ${isOut ? 'border-rose-200 text-rose-700 font-extrabold' : 'border-slate-100 text-slate-400 font-medium'} text-xs">
+              ${isOut ? `🚪 離開: ${s.lastOutTime}` : '點擊外出'}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 3. Render Logs Table
+      renderLogTableOnly();
+    }
+
+    function renderLogTableOnly() {
+      const logList = logsState[currentClassKey] || [];
+      const tbody = document.getElementById('logTableBody');
+      
+      if (logList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-8 text-center text-slate-400 text-sm">
+              目前 ${currentClassKey} 班暫無任何離開課室紀錄
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = logList.map(l => {
+          const isOut = l.status === '離開課室中';
+          return `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-medium text-slate-600">${l.date}</td>
+              <td class="py-3 px-4"><span class="font-bold bg-slate-100 text-slate-800 px-2 py-0.5 rounded">${l.classKey}</span></td>
+              <td class="py-3 px-4 font-black text-base text-slate-900">${l.name}</td>
+              <td class="py-3 px-4 font-semibold text-slate-700">${l.outTime}</td>
+              <td class="py-3 px-4 font-semibold text-slate-700">${l.inTime}</td>
+              <td class="py-3 px-4 text-xs font-bold ${isOut ? 'text-rose-600' : 'text-slate-500'}">${l.duration}</td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${isOut ? 'bg-rose-100 text-rose-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">
+                  ${l.status}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    function exportCurrentClassCSV() {
+      ensureClassDataExists(currentClassKey);
+      const list = logsState[currentClassKey] || [];
+      if (list.length === 0) {
+        alert(`目前 ${currentClassKey} 班沒有任何離開課室紀錄可供匯出。`);
+        return;
+      }
+
+      let csv = "\uFEFF"; // UTF-8 BOM
+      csv += "日期,班別,學生座號,離開時間,回來時間,花費時間,狀態\n";
+
+      list.forEach(l => {
+        csv += `"${l.date}","${l.classKey}","${l.name}","${l.outTime}","${l.inTime}","${l.duration}","${l.status}"\n`;
+      });
+
+      downloadCSV(csv, `${currentClassKey}_離開課室紀錄_${new Date().toISOString().slice(0,10)}.csv`);
+    }
+
+    function exportAllClassesCSV() {
+      let totalLogs = [];
+      Object.keys(logsState).forEach(key => {
+        if (Array.isArray(logsState[key])) {
+          totalLogs = totalLogs.concat(logsState[key]);
+        }
+      });
+
+      if (totalLogs.length === 0) {
+        alert('目前全校各班級均無離開課室紀錄。');
+        return;
+      }
+
+      totalLogs.sort((a, b) => b.id - a.id);
+
+      let csv = "\uFEFF"; // UTF-8 BOM
+      csv += "日期,班別,學生座號,離開時間,回來時間,花費時間,狀態\n";
+
+      totalLogs.forEach(l => {
+        csv += `"${l.date}","${l.classKey}","${l.name}","${l.outTime}","${l.inTime}","${l.duration}","${l.status}"\n`;
+      });
+
+      downloadCSV(csv, `全校24班_離開課室總紀錄_${new Date().toISOString().slice(0,10)}.csv`);
+    }
+
+    function downloadCSV(csvContent, filename) {
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.setAttribute("download", filename);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function clearCurrentLogs() {
+      if (confirm(`確定要清除 ${currentClassKey} 班的所有離開課室紀錄嗎？\n（清除後無法復原）`)) {
+        logsState[currentClassKey] = [];
+        if (studentsState[currentClassKey]) {
+          studentsState[currentClassKey].forEach(s => {
+            s.isOut = false;
+            s.lastOutTime = null;
+          });
+        }
+        saveAllToStorage();
+        renderApp();
+        showToast(`已清空 ${currentClassKey} 班紀錄`, '🗑️');
+      }
+    }
+
+    function showToast(msg, icon = '✅') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      document.getElementById('toastIcon').innerText = icon;
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
