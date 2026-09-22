@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客西馬尼園與祈禱的手 - 五年級可愛風互動樂園</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #fff0f5 0%, #fffacd 50%, #e0ffff 100%);
+            color: #5c4033;
+            min-height: 100vh;
+        }
+        .cute-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 4px solid #ffd1dc;
+            box-shadow: 0 12px 30px rgba(255, 182, 193, 0.35);
+            border-radius: 2.5rem;
+        }
+        .cute-btn {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-bottom: 4px solid rgba(0,0,0,0.15);
+        }
+        .cute-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            filter: brightness(1.05);
+        }
+        .cute-btn:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+        .float-anim {
+            animation: floatSlow 3s ease-in-out infinite;
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .pulse-badge {
+            animation: pulseBadge 1.5s infinite;
+        }
+        @keyframes pulseBadge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 14px;
+            background: #ff69b4;
+            top: 0;
+            opacity: 0.8;
+            animation: fall 3s linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(500px) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between p-4 md:p-6 select-none">
+
+    <!-- Header Navigation -->
+    <header class="w-full max-w-4xl text-center mb-4">
+        <div class="inline-flex items-center space-x-2 bg-pink-100 text-pink-700 px-5 py-1.5 rounded-full text-sm font-bold shadow-sm mb-2 border-2 border-pink-200">
+            <span>🌸 五年級宗教教育互動樂園</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-black text-amber-800 tracking-wide drop-shadow-sm mb-1">
+            ✨ 客西馬尼園與祈禱的手 ✨
+        </h1>
+        <p class="text-stone-600 text-sm md:text-base font-semibold">
+            跟著可愛的插畫與小遊戲，一起探索經文與偉大的友情故事！
+        </p>
+    </header>
+
+    <!-- Main Game Box -->
+    <main class="w-full max-w-3xl cute-card p-6 md:p-8 relative overflow-hidden mb-4">
+        
+        <!-- HUD Score & Badge Bar -->
+        <div id="hud-bar" class="flex justify-between items-center mb-5 border-b-2 border-pink-100 pb-3 hidden">
+            <div class="flex items-center space-x-2">
+                <span id="activity-badge" class="bg-pink-400 text-white px-3 py-1 rounded-xl text-xs md:text-sm font-bold shadow">活動一</span>
+                <span id="activity-title" class="text-amber-900 font-bold text-sm md:text-base">故事大考驗</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-100 text-amber-800 px-3 py-1 rounded-xl font-bold text-xs md:text-sm border border-amber-300">
+                    ⭐ 積分: <span id="score-val" class="font-black text-amber-600">0</span>
+                </div>
+                <div class="bg-purple-100 text-purple-800 px-3 py-1 rounded-xl font-bold text-xs md:text-sm border border-purple-200 hidden md:block">
+                    🏅 徽章: <span id="badge-count">0</span> / 4
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. Start Screen -->
+        <div id="screen-start" class="text-center py-4">
+            <div class="w-32 h-32 mx-auto mb-5 bg-gradient-to-tr from-pink-300 to-yellow-200 rounded-full flex items-center justify-center shadow-md float-anim border-4 border-white">
+                <span class="text-6xl">🌿✨</span>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-black text-amber-900 mb-3">準備好展開探索旅程了嗎？</h2>
+            <p class="text-stone-600 max-w-md mx-auto mb-6 text-sm md:text-base leading-relaxed font-medium">
+                本遊戲包含 4 個超級好玩的小活動：故事選擇題、經文金句配對、客西馬尼園警醒挑戰，以及祈禱的手故事排序！快來收集全部的愛心徽章吧！
+            </p>
+            <button onclick="startJourney()" class="cute-btn bg-gradient-to-r from-pink-400 to-amber-400 text-white font-black px-8 py-4 rounded-2xl shadow-lg text-lg flex items-center justify-center mx-auto space-x-2 border-b-4 border-pink-600">
+                <span>🎮 開始可愛大冒險！</span>
+            </button>
+        </div>
+
+        <!-- 2. Activity 1: Story Multiple Choice -->
+        <div id="screen-act-1" class="hidden">
+            <div class="mb-4 bg-pink-50 p-4 rounded-2xl border-2 border-pink-200 text-pink-900 text-sm md:text-base font-medium">
+                💖 <span class="font-bold">活動一說明：</span>根據客西馬尼園的故事內容，選出最正確的答案！
+            </div>
+            <div id="a1-question-box" class="text-lg font-bold text-amber-900 mb-4"></div>
+            <div id="a1-options-box" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"></div>
+            <div id="a1-feedback" class="p-3 rounded-xl hidden text-center font-bold text-sm"></div>
+        </div>
+
+        <!-- 3. Activity 2: Verse Matching Game -->
+        <div id="screen-act-2" class="hidden">
+            <div class="mb-4 bg-yellow-50 p-4 rounded-2xl border-2 border-yellow-200 text-yellow-900 text-sm md:text-base font-medium">
+                🧩 <span class="font-bold">活動二說明：</span>請將上方的「金句主題」與下方的「正確經文內容或出處」進行點選配對！
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="bg-pink-50 p-4 rounded-2xl border-2 border-pink-200">
+                    <h3 class="font-bold text-pink-800 mb-2 text-sm">📌 選擇金句卡片：</h3>
+                    <div id="a2-keys" class="flex flex-col gap-2"></div>
+                </div>
+                <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-200">
+                    <h3 class="font-bold text-amber-800 mb-2 text-sm">📌 選擇對應內容：</h3>
+                    <div id="a2-targets" class="flex flex-col gap-2"></div>
+                </div>
+            </div>
+            <div id="a2-feedback" class="p-3 rounded-xl hidden text-center font-bold text-sm"></div>
+        </div>
+
+        <!-- 4. Activity 3: Gethsemane Vigilance & Tap Game -->
+        <div id="screen-act-3" class="hidden">
+            <div class="mb-4 bg-cyan-50 p-4 rounded-2xl border-2 border-cyan-200 text-cyan-900 text-sm md:text-base font-medium">
+                🌙 <span class="font-bold">活動三說明：</span>夜深了，門徒們容易打瞌睡！請在限時內點擊打瞌睡的門徒幫他們保持清醒（點擊 4 次）！
+            </div>
+            <div class="flex justify-between items-center bg-cyan-100 p-3 rounded-xl mb-4 font-bold text-cyan-900 text-sm border border-cyan-300">
+                <div>⏳ 剩餘時間: <span id="a3-timer" class="text-cyan-700 font-black">15</span> 秒</div>
+                <div>✨ 已喚醒次數: <span id="a3-count" class="text-cyan-700 font-black">0</span> / 4</div>
+            </div>
+            <div id="a3-game-area" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 min-h-[160px] bg-indigo-900/10 p-4 rounded-2xl border-2 border-cyan-200 relative flex items-center justify-center">
+                <!-- Interactive sleeping disciples -->
+            </div>
+            <div id="a3-feedback" class="p-3 rounded-xl hidden text-center font-bold text-sm"></div>
+        </div>
+
+        <!-- 5. Activity 4: Praying Hands Sequence -->
+        <div id="screen-act-4" class="hidden">
+            <div class="mb-4 bg-purple-50 p-4 rounded-2xl border-2 border-purple-200 text-purple-900 text-sm md:text-base font-medium">
+                🎨 <span class="font-bold">活動四說明：</span>杜爾與韓士的「祈禱的手」故事順序是什麼？請依序點選 1 到 4 步事件卡！
+            </div>
+            <div class="mb-3 font-bold text-amber-900 text-sm">請按正確順序點選下列事件卡：</div>
+            <div id="a4-tiles-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"></div>
+            <div class="bg-amber-100/70 p-3 rounded-xl mb-4 border border-amber-200">
+                <div class="text-xs text-amber-800 font-bold mb-1">已選順序：</div>
+                <div id="a4-selected-sequence" class="flex flex-wrap gap-2 min-h-[30px] items-center text-xs font-medium text-amber-900">
+                    <span class="text-stone-400 italic">尚未選擇，請點選下方事件卡...</span>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="resetA4()" class="cute-btn bg-stone-200 text-stone-700 font-bold px-4 py-2 rounded-xl text-sm border-stone-300">重新選擇</button>
+                <button onclick="submitA4()" class="cute-btn bg-purple-600 text-white font-bold px-6 py-2 rounded-xl text-sm flex-1 border-purple-800">確認排序</button>
+            </div>
+            <div id="a4-feedback" class="mt-3 p-3 rounded-xl hidden text-center font-bold text-sm"></div>
+        </div>
+
+        <!-- 6. Victory Screen -->
+        <div id="screen-victory" class="hidden text-center py-4">
+            <div class="w-32 h-32 mx-auto mb-5 bg-gradient-to-tr from-yellow-300 to-pink-400 rounded-full flex items-center justify-center shadow-lg pulse-badge border-4 border-white">
+                <span class="text-6xl">🏆</span>
+            </div>
+            <h2 class="text-3xl font-black text-amber-900 mb-2">恭喜你通關所有可愛小活動！</h2>
+            <p class="text-stone-600 text-base mb-4 font-semibold">
+                獲得總分：<span id="final-score" class="text-2xl font-black text-amber-600">0</span> 分！獲得 4 枚愛心徽章！<br>
+                <span class="text-sm italic text-pink-700">「你們要謹慎自守，要警醒禱告。」（彼得前書 4章7節）</span>
+            </p>
+            <div class="bg-pink-50 border-2 border-pink-200 p-4 rounded-2xl mb-6 text-sm text-pink-900 font-medium max-w-md mx-auto leading-relaxed">
+                🌟 學習收穫：無論遇到什麼挫折與內心掙扎，我們都能像耶穌一樣透過禱告向上帝傾訴，並學習守望相助、彼此代禱的溫暖精神！
+            </div>
+            <button onclick="startJourney()" class="cute-btn bg-gradient-to-r from-pink-400 to-amber-400 text-white font-black px-8 py-3 rounded-2xl shadow-lg text-base border-b-4 border-pink-600">
+                🔄 再次挑戰遊戲
+            </button>
+        </div>
+
+    </main>
+
+    <footer class="text-center text-xs text-stone-600 font-bold">
+        客西馬尼園與祈禱的手 • 五年級可愛風互動學習軟體 © 2026
+    </footer>
+
+    <!-- Web Audio API Sound Synthesizer -->
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+                gainNode.gain.setValueAtTime(0.15, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'success') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.setValueAtTime(180, now + 0.15);
+                gainNode.gain.setValueAtTime(0.15, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'win') {
+                const notes = [523.25, 587.33, 659.25, 698.46, 783.99, 880, 987.77, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const noteOsc = audioCtx.createOscillator();
+                    const noteGain = audioCtx.createGain();
+                    noteOsc.connect(noteGain);
+                    noteGain.connect(audioCtx.destination);
+                    noteOsc.type = 'sine';
+                    noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    noteGain.gain.setValueAtTime(0.15, now + idx * 0.08);
+                    noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.15);
+                    noteOsc.start(now + idx * 0.08);
+                    noteOsc.stop(now + idx * 0.08 + 0.15);
+                });
+            }
+        }
+    </script>
+
+    <!-- Game Logic Scripts -->
+    <script>
+        let currentScore = 0;
+        let badgeCount = 0;
+        let currentAct = 1;
+
+        function showScreen(screenId) {
+            ['screen-start', 'screen-act-1', 'screen-act-2', 'screen-act-3', 'screen-act-4', 'screen-victory'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function updateHUD() {
+            document.getElementById('score-val').innerText = currentScore;
+            document.getElementById('badge-count').innerText = badgeCount;
+            const titles = ["活動一：故事選擇題", "活動二：經文配對樂", "活動三：客西馬尼園警醒", "活動四：祈禱的手排序"];
+            document.getElementById('activity-badge').innerText = `活動 ${currentAct}`;
+            document.getElementById('activity-title').innerText = titles[currentAct - 1];
+        }
+
+        function startJourney() {
+            playSound('click');
+            currentScore = 0;
+            badgeCount = 0;
+            currentAct = 1;
+            document.getElementById('hud-bar').classList.remove('hidden');
+            updateHUD();
+            showScreen('screen-act-1');
+            initAct1();
+        }
+
+        // --- ACTIVITY 1: Multiple Choice ---
+        const a1Data = [
+            {
+                q: "1. 耶穌吃過逾越節晚餐後，帶領門徒到哪裡去禱告？",
+                options: ["橄欖山上的客西馬尼園", "加利利海邊的漁村", "耶路撒冷聖殿廣場", "曠野山洞"],
+                correct: 0
+            },
+            {
+                q: "2. 耶穌在客西馬尼園向父神祈求時的心情是怎樣的？",
+                options: ["非常高興與輕鬆", "十分憂傷、極其痛苦與掙扎", "充滿憤怒與不滿", "完全無所謂"],
+                correct: 1
+            },
+            {
+                q: "3. 耶穌連續三次回來找門徒，都看見他們在做什麼？",
+                options: ["在認真警醒禱告", "因為身體軟弱而睡著了", "在討論誰為大", "在整理行李"],
+                correct: 1
+            }
+        ];
+        let a1Idx = 0;
+
+        function initAct1() {
+            a1Idx = 0;
+            loadA1Question();
+        }
+
+        function loadA1Question() {
+            if (a1Idx >= a1Data.length) {
+                badgeCount++;
+                currentAct = 2;
+                updateHUD();
+                playSound('success');
+                showScreen('screen-act-2');
+                initAct2();
+                return;
+            }
+            const item = a1Data[a1Idx];
+            document.getElementById('a1-question-box').innerText = item.q;
+            const optsBox = document.getElementById('a1-options-box');
+            optsBox.innerHTML = '';
+            item.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "cute-btn text-left p-4 rounded-2xl bg-pink-50 hover:bg-pink-100 border-2 border-pink-200 text-pink-900 font-bold text-sm shadow-sm";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    playSound('click');
+                    const fb = document.getElementById('a1-feedback');
+                    fb.classList.remove('hidden');
+                    if (idx === item.correct) {
+                        currentScore += 25;
+                        updateHUD();
+                        playSound('success');
+                        fb.className = "p-3 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-center text-sm";
+                        fb.innerText = "🎉 答對囉！太棒了！";
+                        setTimeout(() => {
+                            fb.classList.add('hidden');
+                            a1Idx++;
+                            loadA1Question();
+                        }, 1000);
+                    } else {
+                        playSound('error');
+                        fb.className = "p-3 rounded-xl bg-rose-100 text-rose-800 font-bold text-center text-sm";
+                        fb.innerText = "❌ 答錯囉！再想想看故事內容！";
+                    }
+                };
+                optsBox.appendChild(btn);
+            });
+            document.getElementById('a1-feedback').classList.add('hidden');
+        }
+
+        // --- ACTIVITY 2: Verse Matching ---
+        const a2Pairs = [
+            { id: 1, key: "彼得前書金句主題", target: "要謹慎自守，要警醒禱告（彼得前書4:7）" },
+            { id: 2, key: "耶穌在客西馬尼的禱告", target: "不要照我的意思，只要照你的意思" },
+            { id: 3, key: "杜爾與韓士的故事", target: "互相代禱與那雙偉大的「祈禱的手」" }
+        ];
+        let selectedA2Key = null;
+        let a2Matches = 0;
+
+        function initAct2() {
+            a2Matches = 0;
+            selectedA2Key = null;
+            renderA2();
+            document.getElementById('a2-feedback').classList.add('hidden');
+        }
+
+        function renderA2() {
+            const keysContainer = document.getElementById('a2-keys');
+            const targetsContainer = document.getElementById('a2-targets');
+            keysContainer.innerHTML = '';
+            targetsContainer.innerHTML = '';
+
+            // Shuffle targets for display
+            const shuffledTargets = [...a2Pairs].sort(() => Math.random() - 0.5);
+
+            a2Pairs.forEach(pair => {
+                if (!pair.matched) {
+                    const btn = document.createElement('button');
+                    btn.className = `cute-btn p-3 rounded-xl font-bold text-sm border-2 text-left ${selectedA2Key === pair.id ? 'bg-pink-300 border-pink-500 text-white' : 'bg-pink-50 border-pink-200 text-pink-900'}`;
+                    btn.innerText = `🏷️ ${pair.key}`;
+                    btn.onclick = () => {
+                        playSound('click');
+                        selectedA2Key = pair.id;
+                        renderA2();
+                    };
+                    keysContainer.appendChild(btn);
+                }
+            });
+
+            shuffledTargets.forEach(pair => {
+                if (!pair.matched) {
+                    const btn = document.createElement('button');
+                    btn.className = "cute-btn p-3 rounded-xl font-bold text-sm border-2 text-left bg-amber-50 border-amber-200 text-amber-900 hover:bg-amber-100";
+                    btn.innerText = `📖 ${pair.target}`;
+                    btn.onclick = () => {
+                        playSound('click');
+                        if (selectedA2Key === null) {
+                            return;
+                        }
+                        if (selectedA2Key === pair.id) {
+                            playSound('success');
+                            pair.matched = true;
+                            selectedA2Key = null;
+                            a2Matches++;
+                            currentScore += 30;
+                            updateHUD();
+                            renderA2();
+                            if (a2Matches === a2Pairs.length) {
+                                badgeCount++;
+                                currentAct = 3;
+                                updateHUD();
+                                document.getElementById('a2-feedback').classList.remove('hidden');
+                                document.getElementById('a2-feedback').className = "p-3 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-center text-sm";
+                                document.getElementById('a2-feedback').innerText = "🎉 經文配對全部完成！太厲害了！";
+                                setTimeout(() => {
+                                    showScreen('screen-act-3');
+                                    initAct3();
+                                }, 1200);
+                            }
+                        } else {
+                            playSound('error');
+                            const fb = document.getElementById('a2-feedback');
+                            fb.classList.remove('hidden');
+                            fb.className = "p-3 rounded-xl bg-rose-100 text-rose-800 font-bold text-center text-sm";
+                            fb.innerText = "❌ 配對不正確，再試一次！";
+                        }
+                    };
+                    targetsContainer.appendChild(btn);
+                }
+            });
+        }
+
+        // --- ACTIVITY 3: Gethsemane Vigilance Tap ---
+        let a3Awakened = 0;
+        let a3Timer = 15;
+        let a3Interval = null;
+
+        function initAct3() {
+            a3Awakened = 0;
+            a3Timer = 15;
+            document.getElementById('a3-count').innerText = a3Awakened;
+            document.getElementById('a3-timer').innerText = a3Timer;
+            document.getElementById('a3-feedback').classList.add('hidden');
+            renderDisciples();
+
+            if (a3Interval) clearInterval(a3Interval);
+            a3Interval = setInterval(() => {
+                a3Timer--;
+                document.getElementById('a3-timer').innerText = a3Timer;
+                if (a3Timer <= 0) {
+                    clearInterval(a3Interval);
+                    checkAct3Result();
+                }
+            }, 1000);
+        }
+
+        function renderDisciples() {
+            const area = document.getElementById('a3-game-area');
+            area.innerHTML = '';
+            for (let i = 0; i < 4; i++) {
+                const disc = document.createElement('div');
+                disc.className = "cute-btn flex flex-col items-center justify-center bg-cyan-100 border-2 border-cyan-300 p-4 rounded-2xl cursor-pointer shadow-sm";
+                disc.innerHTML = `
+                    <span class="text-3xl mb-1">😴</span>
+                    <span class="text-xs font-bold text-cyan-900">門徒 ${i+1}</span>
+                `;
+                disc.onclick = () => {
+                    if (!disc.classList.contains('woken')) {
+                        playSound('click');
+                        disc.classList.add('woken', 'bg-emerald-100', 'border-emerald-400');
+                        disc.innerHTML = `<span class="text-3xl mb-1">👀</span><span class="text-xs font-bold text-emerald-800">已清醒！</span>`;
+                        a3Awakened++;
+                        document.getElementById('a3-count').innerText = a3Awakened;
+                        if (a3Awakened >= 4) {
+                            clearInterval(a3Interval);
+                            playSound('success');
+                            currentScore += 40;
+                            badgeCount++;
+                            currentAct = 4;
+                            updateHUD();
+                            const fb = document.getElementById('a3-feedback');
+                            fb.classList.remove('hidden');
+                            fb.className = "p-3 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-center text-sm";
+                            fb.innerText = "🎉 太棒了！成功喚醒所有門徒，一起警醒禱告！";
+                            setTimeout(() => {
+                                showScreen('screen-act-4');
+                                initAct4();
+                            }, 1500);
+                        }
+                    }
+                };
+                area.appendChild(disc);
+            }
+        }
+
+        function checkAct3Result() {
+            if (a3Awakened < 4) {
+                playSound('error');
+                const fb = document.getElementById('a3-feedback');
+                fb.classList.remove('hidden');
+                fb.className = "p-3 rounded-xl bg-rose-100 text-rose-800 font-bold text-center text-sm";
+                fb.innerText = "⏰ 時間到！沒關係，我們直接進入下一個活動！";
+                setTimeout(() => {
+                    currentAct = 4;
+                    badgeCount++;
+                    updateHUD();
+                    showScreen('screen-act-4');
+                    initAct4();
+                }, 1500);
+            }
+        }
+
+        // --- ACTIVITY 4: Praying Hands Sequence ---
+        const a4Original = [
+            { id: 1, text: "1. 杜爾與韓士渴望成為畫家，抽籤決定一人先工作支助另一人。" },
+            { id: 2, text: "2. 韓士到煤礦辛苦勞動，支助杜爾上學深造。" },
+            { id: 3, text: "3. 杜爾成為畫家，韓士因長期勞損患關節炎無法執筆，仍為杜爾祈禱。" },
+            { id: 4, text: "4. 杜爾感動地將韓士那雙粗糙卻偉大的手畫下，成為名畫「祈禱的手」。" }
+        ];
+        let a4Shuffled = [];
+        let a4UserSelection = [];
+
+        function initAct4() {
+            a4UserSelection = [];
+            a4Shuffled = [...a4Original].sort(() => Math.random() - 0.5);
+            renderA4Tiles();
+            document.getElementById('a4-selected-sequence').innerHTML = '<span class="text-stone-400 italic">尚未選擇，請點選下方事件卡...</span>';
+            document.getElementById('a4-feedback').classList.add('hidden');
+        }
+
+        function renderA4Tiles() {
+            const container = document.getElementById('a4-tiles-container');
+            container.innerHTML = '';
+            a4Shuffled.forEach((tile) => {
+                const isSelected = a4UserSelection.includes(tile.id);
+                const div = document.createElement('div');
+                div.className = `cute-btn p-3 rounded-xl border-2 transition-all text-xs md:text-sm font-bold flex items-center justify-between ${
+                    isSelected ? 'bg-purple-200 border-purple-400 text-purple-900 opacity-60 cursor-not-allowed' : 'bg-purple-50 border-purple-200 text-purple-900 cursor-pointer hover:bg-purple-100 shadow-sm'
+                }`;
+                div.innerHTML = `<span>${tile.text}</span> ${isSelected ? '<span class="text-xs bg-purple-700 text-white px-2 py-0.5 rounded-full">已選</span>' : ''}`;
+                if (!isSelected) {
+                    div.onclick = () => {
+                        playSound('click');
+                        if (a4UserSelection.length < 4) {
+                            a4UserSelection.push(tile.id);
+                            renderA4Tiles();
+                            updateA4SequenceDisplay();
+                        }
+                    };
+                }
+                container.appendChild(div);
+            });
+        }
+
+        function resetA4() {
+            playSound('click');
+            a4UserSelection = [];
+            renderA4Tiles();
+            document.getElementById('a4-selected-sequence').innerHTML = '<span class="text-stone-400 italic">尚未選擇，請點選下方事件卡...</span>';
+            document.getElementById('a4-feedback').classList.add('hidden');
+        }
+
+        function updateA4SequenceDisplay() {
+            const seqContainer = document.getElementById('a4-selected-sequence');
+            if (a4UserSelection.length === 0) {
+                seqContainer.innerHTML = '<span class="text-stone-400 italic">尚未選擇，請點選下方事件卡...</span>';
+                return;
+            }
+            seqContainer.innerHTML = '';
+            a4UserSelection.forEach((id, index) => {
+                const badge = document.createElement('div');
+                badge.className = "bg-purple-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold shadow flex items-center space-x-1";
+                badge.innerHTML = `<span>第 ${index+1} 步: 事件 #${id}</span>`;
+                seqContainer.appendChild(badge);
+            });
+        }
+
+        function submitA4() {
+            playSound('click');
+            const fb = document.getElementById('a4-feedback');
+            fb.classList.remove('hidden');
+            if (a4UserSelection.length !== 4) {
+                playSound('error');
+                fb.className = "p-3 rounded-xl bg-rose-100 text-rose-800 font-bold text-center text-sm";
+                fb.innerText = "⚠️ 請完整選出所有 4 個步驟的順序！";
+                return;
+            }
+
+            const isCorrect = a4UserSelection.every((val, idx) => val === (idx + 1));
+            if (isCorrect) {
+                playSound('win');
+                currentScore += 50;
+                badgeCount++;
+                updateHUD();
+                fb.className = "p-3 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-center text-sm";
+                fb.innerText = "🎉 太棒了！順序完全正確，完美體會「祈禱的手」的偉大友情！";
+                setTimeout(() => {
+                    document.getElementById('hud-bar').classList.add('hidden');
+                    document.getElementById('final-score').innerText = currentScore;
+                    showScreen('screen-victory');
+                }, 1800);
+            } else {
+                playSound('error');
+                fb.className = "p-3 rounded-xl bg-rose-100 text-rose-800 font-bold text-center text-sm";
+                fb.innerText = "❌ 順序有誤，再回想一下漫畫情節（抽籤支助 -> 煤礦工作 -> 關節勞損祈禱 -> 繪製名畫）！";
+            }
+        }
+    </script>
+</body>
+</html>
