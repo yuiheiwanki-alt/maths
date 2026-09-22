@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奇數與偶數大冒險</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', 'Fredoka', cursive, sans-serif;
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#bbf7d0 1.5px, transparent 1.5px), radial-gradient(#bbf7d0 1.5px, #f0fdf4 1.5px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            touch-action: manipulation;
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        .pop-item {
+            animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popUp {
+            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .pulse-gentle {
+            animation: pulseGentle 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseGentle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        /* 慶祝花灑動畫 */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: fall 1.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(250px) rotate(360deg); opacity: 0; }
+        }
+
+        /* 按鈕陰影效果 */
+        .btn-shadow-odd {
+            box-shadow: 0 8px 0 #3b82f6, 0 12px 15px rgba(59, 130, 246, 0.3);
+        }
+        .btn-shadow-odd:active {
+            box-shadow: 0 2px 0 #3b82f6, 0 4px 6px rgba(59, 130, 246, 0.3);
+            transform: translateY(6px);
+        }
+
+        .btn-shadow-even {
+            box-shadow: 0 8px 0 #ec4899, 0 12px 15px rgba(236, 72, 153, 0.3);
+        }
+        .btn-shadow-even:active {
+            box-shadow: 0 2px 0 #ec4899, 0 4px 6px rgba(236, 72, 153, 0.3);
+            transform: translateY(6px);
+        }
+
+        .btn-shadow-next {
+            box-shadow: 0 6px 0 #059669, 0 10px 12px rgba(16, 185, 129, 0.2);
+        }
+        .btn-shadow-next:active {
+            box-shadow: 0 2px 0 #059669, 0 3px 4px rgba(16, 185, 129, 0.2);
+            transform: translateY(4px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-3 sm:p-6 text-gray-800 select-none">
+
+    <svg style="display: none;">
+        <!-- 蘋果 -->
+        <g id="icon-apple">
+            <path d="M25,45 C15,45 8,35 8,25 C8,15 18,10 25,15 C32,10 42,15 42,25 C42,35 35,45 25,45 Z" fill="#ff5252" />
+            <path d="M25,15 C23,8 26,3 29,2" stroke="#795548" stroke-width="3" stroke-linecap="round" fill="none" />
+            <path d="M27,8 C33,5 37,9 35,13 Z" fill="#66bb6a" />
+            <circle cx="18" cy="22" r="3" fill="#ffffff" opacity="0.6" />
+            <!-- 可愛眼睛 -->
+            <circle cx="20" cy="26" r="2" fill="#212121" />
+            <circle cx="30" cy="26" r="2" fill="#212121" />
+            <path d="M23,30 Q25,33 27,30" stroke="#212121" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            <circle cx="16" cy="28" r="2" fill="#ff8a80" opacity="0.8" />
+            <circle cx="34" cy="28" r="2" fill="#ff8a80" opacity="0.8" />
+        </g>
+        <!-- 星星 -->
+        <g id="icon-star">
+            <polygon points="25,3 32,17 47,19 36,30 39,45 25,37 11,45 14,30 3,19 18,17" fill="#ffd54f" stroke="#ffb300" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="18" cy="22" r="2" fill="#212121" />
+            <circle cx="32" cy="22" r="2" fill="#212121" />
+            <path d="M21,27 Q25,31 29,27" stroke="#212121" stroke-width="2" fill="none" stroke-linecap="round" />
+            <circle cx="14" cy="25" r="2.5" fill="#ff8a65" opacity="0.7" />
+            <circle cx="36" cy="25" r="2.5" fill="#ff8a65" opacity="0.7" />
+        </g>
+        <!-- 小熊 -->
+        <g id="icon-bear">
+            <circle cx="10" cy="12" r="8" fill="#bcaaa4" />
+            <circle cx="10" cy="12" r="4" fill="#ffab91" />
+            <circle cx="40" cy="12" r="8" fill="#bcaaa4" />
+            <circle cx="40" cy="12" r="4" fill="#ffab91" />
+            <circle cx="25" cy="26" r="20" fill="#d7ccc8" />
+            <ellipse cx="25" cy="30" rx="8" ry="6" fill="#ffffff" />
+            <ellipse cx="25" cy="27" rx="3.5" ry="2.5" fill="#4e342e" />
+            <circle cx="17" cy="22" r="2.5" fill="#212121" />
+            <circle cx="33" cy="22" r="2.5" fill="#212121" />
+            <circle cx="14" cy="28" r="3" fill="#ff8a80" opacity="0.6" />
+            <circle cx="36" cy="28" r="3" fill="#ff8a80" opacity="0.6" />
+        </g>
+        <!-- 貓咪 -->
+        <g id="icon-cat">
+            <polygon points="8,5 18,18 5,22" fill="#ffcc80" />
+            <polygon points="42,5 45,22 32,18" fill="#ffcc80" />
+            <polygon points="10,8 16,16 8,19" fill="#ffab91" />
+            <polygon points="40,8 42,19 34,16" fill="#ffab91" />
+            <circle cx="25" cy="27" r="19" fill="#ffe0b2" />
+            <ellipse cx="17" cy="24" rx="2.5" ry="3.5" fill="#212121" />
+            <ellipse cx="33" cy="24" rx="2.5" ry="3.5" fill="#212121" />
+            <polygon points="25,28 23,31 27,31" fill="#e91e63" />
+            <path d="M21,34 Q25,37 25,32 Q25,37 29,34" stroke="#212121" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <circle cx="12" cy="30" r="3" fill="#ff8a80" opacity="0.6" />
+            <circle cx="38" cy="30" r="3" fill="#ff8a80" opacity="0.6" />
+        </g>
+        <!-- 笑臉 -->
+        <g id="icon-smile">
+            <circle cx="25" cy="25" r="22" fill="#81d4fa" stroke="#29b6f6" stroke-width="2"/>
+            <circle cx="17" cy="18" r="3" fill="#0277bd" />
+            <circle cx="33" cy="18" r="3" fill="#0277bd" />
+            <path d="M14,28 Q25,42 36,28" stroke="#0277bd" stroke-width="3" fill="none" stroke-linecap="round" />
+            <circle cx="12" cy="26" r="3" fill="#ff8a80" opacity="0.7" />
+            <circle cx="38" cy="26" r="3" fill="#ff8a80" opacity="0.7" />
+        </g>
+    </svg>
+
+    <header class="w-full max-w-xl flex flex-col items-center mb-3">
+        <!-- 標題與可愛徽章 -->
+        <div class="flex items-center gap-2 mb-2">
+            <span class="text-3xl sm:text-4xl">🎈</span>
+            <h1 class="text-2xl sm:text-3xl font-black text-amber-600 tracking-wide drop-shadow-sm">
+                奇數與偶數大冒險
+            </h1>
+            <span class="text-3xl sm:text-4xl">🎁</span>
+        </div>
+
+        <!-- 計分板 -->
+        <div class="w-full bg-white/90 backdrop-blur-sm rounded-3xl p-3 shadow-lg border-4 border-amber-200 flex justify-around items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🌟</span>
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-gray-500">答對總數</span>
+                    <span id="score-count" class="text-xl sm:text-2xl font-black text-amber-500">0</span>
+                </div>
+            </div>
+
+            <div class="h-8 w-1 bg-amber-100 rounded-full"></div>
+
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🔥</span>
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-gray-500">連續答對</span>
+                    <span id="streak-count" class="text-xl sm:text-2xl font-black text-orange-500">0</span>
+                </div>
+            </div>
+
+            <div class="h-8 w-1 bg-amber-100 rounded-full"></div>
+
+            <!-- 圖案切換器 -->
+            <div class="flex flex-col items-center">
+                <span class="text-xs font-bold text-gray-500 mb-1">切換圖案</span>
+                <div class="flex gap-1" id="icon-selector">
+                    <!-- 由 JS 動態生成按鈕 -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="game-card" class="w-full max-w-xl bg-white rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-emerald-300 flex flex-col items-center relative overflow-hidden transition-all duration-300">
+        
+        <!-- 題目數字標示 -->
+        <div class="flex items-center justify-center gap-3 mb-2">
+            <span class="text-sm sm:text-base font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                請問這個數字是？
+            </span>
+        </div>
+
+        <div id="number-display" class="text-6xl sm:text-7xl font-black text-amber-500 tracking-wider mb-3 bounce-in">
+            <!-- 數字由 JS 生成 -->
+            0
+        </div>
+
+        <!-- 圖案展示區（成雙成對） -->
+        <div class="w-full bg-amber-50/70 rounded-2xl p-3 sm:p-4 border-2 border-dashed border-amber-200 mb-4 min-h-[160px] flex flex-col items-center justify-center relative" id="confetti-container">
+            <div id="pattern-grid" class="flex flex-col gap-3 sm:gap-4 items-center justify-center w-full">
+                <!-- 圖案陣列由 JS 動態生成 -->
+            </div>
+        </div>
+
+        <!-- 按鈕組：奇數與偶數 -->
+        <div id="action-buttons" class="grid grid-cols-2 gap-4 w-full mb-2">
+            <button id="btn-odd" onclick="checkAnswer('odd')" class="btn-shadow-odd bg-blue-500 hover:bg-blue-400 text-white font-black text-2xl sm:text-3xl py-4 rounded-2xl border-2 border-blue-300 transition-all duration-150 active:scale-95 flex flex-col items-center justify-center gap-1">
+                <span>奇數</span>
+                <span class="text-xs font-normal opacity-80">(剩餘 1 個無法成對)</span>
+            </button>
+            <button id="btn-even" onclick="checkAnswer('even')" class="btn-shadow-even bg-pink-500 hover:bg-pink-400 text-white font-black text-2xl sm:text-3xl py-4 rounded-2xl border-2 border-pink-300 transition-all duration-150 active:scale-95 flex flex-col items-center justify-center gap-1">
+                <span>偶數</span>
+                <span class="text-xs font-normal opacity-80">(大家都有好朋友配對)</span>
+            </button>
+        </div>
+
+        <!-- 反饋提示訊息區域 -->
+        <div id="feedback-box" class="w-full hidden rounded-2xl p-4 text-center mb-2 bounce-in">
+            <div id="feedback-title" class="text-xl sm:text-2xl font-black mb-1"></div>
+            <div id="feedback-text" class="text-base sm:text-lg font-bold"></div>
+        </div>
+
+        <!-- 下一題按鈕 -->
+        <button id="btn-next" onclick="generateNewQuestion()" class="btn-shadow-next hidden w-full bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xl sm:text-2xl py-3 rounded-2xl border-2 border-emerald-300 transition-all duration-150 active:scale-95 items-center justify-center gap-2">
+            <span>下一題 ➔</span>
+        </button>
+
+    </main>
+
+    <footer class="w-full max-w-xl mt-4 bg-white/70 backdrop-blur-sm rounded-2xl p-3 text-center border border-emerald-200">
+        <p class="text-xs sm:text-sm font-bold text-emerald-800 flex items-center justify-center gap-1 flex-wrap">
+            <span>💡 學習小撇步：</span>
+            <span>兩兩成對是<strong class="text-pink-600">「偶數」</strong>，</span>
+            <span>多出一個單獨的是<strong class="text-blue-600">「奇數」</strong>喔！</span>
+        </p>
+    </footer>
+
+    <script>
+        // 狀態變數
+        let currentNumber = 0;
+        let score = 0;
+        let streak = 0;
+        let isAnswered = false;
+        let currentIcon = 'apple';
+        let autoNextTimer = null;
+
+        // 圖案清單
+        const icons = [
+            { id: 'apple', name: '蘋果', color: 'bg-red-100 text-red-500' },
+            { id: 'star', name: '星星', color: 'bg-amber-100 text-amber-500' },
+            { id: 'bear', name: '小熊', color: 'bg-amber-200 text-amber-800' },
+            { id: 'cat', name: '貓咪', color: 'bg-orange-100 text-orange-500' },
+            { id: 'smile', name: '笑臉', color: 'bg-sky-100 text-sky-500' }
+        ];
+
+        // 頁面初始化
+        window.onload = function() {
+            renderIconSelector();
+            generateNewQuestion();
+        };
+
+        // 渲染圖案切換選擇器
+        function renderIconSelector() {
+            const container = document.getElementById('icon-selector');
+            container.innerHTML = '';
+
+            icons.forEach(icon => {
+                const btn = document.createElement('button');
+                const isSelected = icon.id === currentIcon;
+                btn.className = `w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-transform duration-150 ${isSelected ? 'scale-110 ring-2 ring-emerald-500 shadow-md bg-white' : 'opacity-60 hover:opacity-100 bg-white/50'}`;
+                btn.onclick = () => changeIcon(icon.id);
+                
+                btn.innerHTML = `
+                    <svg viewBox="0 0 50 50" class="w-5 h-5 sm:w-6 sm:h-6">
+                        <use href="#icon-${icon.id}"></use>
+                    </svg>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // 切換圖案
+        function changeIcon(iconId) {
+            currentIcon = iconId;
+            renderIconSelector();
+            renderPatterns(currentNumber);
+        }
+
+        // 生成新題目 (1 至 20 隨機數)
+        function generateNewQuestion() {
+            // 清除自動進入下一題的計時器
+            if (autoNextTimer) clearTimeout(autoNextTimer);
+
+            isAnswered = false;
+
+            // 隨機生成 1-20，避免連續出現完全相同的數字
+            let nextNum;
+            do {
+                nextNum = Math.floor(Math.random() * 20) + 1;
+            } while (nextNum === currentNumber && Math.random() > 0.2);
+
+            currentNumber = nextNum;
+
+            // 更新 UI
+            const numDisplay = document.getElementById('number-display');
+            numDisplay.innerText = currentNumber;
+            numDisplay.classList.remove('bounce-in');
+            void numDisplay.offsetWidth; // 觸發 reflow 重新播放動畫
+            numDisplay.classList.add('bounce-in');
+
+            // 渲染圖案陣列
+            renderPatterns(currentNumber);
+
+            // 重設按鈕與提示框狀態
+            document.getElementById('action-buttons').classList.remove('hidden');
+            document.getElementById('btn-odd').disabled = false;
+            document.getElementById('btn-even').disabled = false;
+            
+            const feedbackBox = document.getElementById('feedback-box');
+            feedbackBox.classList.add('hidden');
+            feedbackBox.className = "w-full hidden rounded-2xl p-4 text-center mb-2 bounce-in";
+
+            document.getElementById('btn-next').classList.add('hidden');
+            document.getElementById('btn-next').classList.remove('flex');
+        }
+
+        // 渲染圖案（核心：兩兩成對排成兩列）
+        function renderPatterns(num) {
+            const grid = document.getElementById('pattern-grid');
+            grid.innerHTML = '';
+
+            const pairsCount = Math.floor(num / 2);
+            const hasSingle = num % 2 !== 0;
+
+            // 容器：用 flex 包裹成對的組合與單獨的組合
+            const pairsContainer = document.createElement('div');
+            pairsContainer.className = "flex flex-wrap gap-2 sm:gap-3 justify-center items-center max-w-full";
+
+            let itemDelay = 0;
+
+            // 渲染成對的組合（每對包含 2 個圖案，上下排列或框在一起）
+            for (let i = 0; i < pairsCount; i++) {
+                const pairBox = document.createElement('div');
+                pairBox.className = "flex flex-col gap-1 sm:gap-2 bg-white/90 p-1.5 sm:p-2 rounded-2xl border-2 border-emerald-200 shadow-sm items-center justify-center pop-item";
+                pairBox.style.animationDelay = `${itemDelay}s`;
+                itemDelay += 0.04;
+
+                // 第一個好朋友
+                pairBox.appendChild(createSvgItem());
+                // 第二個好朋友
+                pairBox.appendChild(createSvgItem());
+
+                pairsContainer.appendChild(pairBox);
+            }
+
+            // 如果是奇數，渲染最後單獨多出的一個圖案
+            if (hasSingle) {
+                const singleBox = document.createElement('div');
+                singleBox.className = "flex flex-col gap-1 sm:gap-2 bg-amber-100/90 p-1.5 sm:p-2 rounded-2xl border-2 border-dashed border-amber-400 shadow-sm items-center justify-center relative pop-item";
+                singleBox.style.animationDelay = `${itemDelay}s`;
+
+                // 加入單獨圖案
+                singleBox.appendChild(createSvgItem());
+
+                // 補一個透明佔位或標記「多出 1 個」的可愛標籤
+                const placeholder = document.createElement('div');
+                placeholder.className = "w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-dashed border-amber-300 flex items-center justify-center text-amber-500 font-bold text-xs bg-amber-50/50";
+                placeholder.innerText = "單獨";
+                singleBox.appendChild(placeholder);
+
+                pairsContainer.appendChild(singleBox);
+            }
+
+            grid.appendChild(pairsContainer);
+        }
+
+        // 創建單個 SVG 圖案元素
+        function createSvgItem() {
+            const div = document.createElement('div');
+            div.className = "w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-200 hover:scale-110";
+            div.innerHTML = `
+                <svg viewBox="0 0 50 50" class="w-full h-full drop-shadow-sm">
+                    <use href="#icon-${currentIcon}"></use>
+                </svg>
+            `;
+            return div;
+        }
+
+        // 檢查答案
+        function checkAnswer(userChoice) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const isEven = currentNumber % 2 === 0;
+            const correctAnswer = isEven ? 'even' : 'odd';
+            const isCorrect = userChoice === correctAnswer;
+
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+            const scoreDisplay = document.getElementById('score-count');
+            const streakDisplay = document.getElementById('streak-count');
+
+            // 禁用按鈕防連點
+            document.getElementById('btn-odd').disabled = true;
+            document.getElementById('btn-even').disabled = true;
+
+            if (isCorrect) {
+                // 答對
+                score++;
+                streak++;
+                triggerConfetti();
+
+                feedbackBox.className = "w-full rounded-2xl p-4 text-center mb-2 bounce-in bg-emerald-100 border-2 border-emerald-400 text-emerald-900";
+                feedbackTitle.innerHTML = "🎉 太棒了！答對了！";
+
+                if (isEven) {
+                    feedbackText.innerHTML = `<strong>${currentNumber}</strong> 可以兩兩完美配對，每個人都有好朋友，所以是 <span class="text-pink-600 font-black text-xl">偶數</span>！`;
+                } else {
+                    feedbackText.innerHTML = `<strong>${currentNumber}</strong> 配對完後多出了 <span class="text-amber-700 font-black">1 個單獨的</span>，所以是 <span class="text-blue-600 font-black text-xl">奇數</span>！`;
+                }
+
+                // 設定 1.8 秒後自動進入下一題
+                autoNextTimer = setTimeout(() => {
+                    generateNewQuestion();
+                }, 1800);
+
+            } else {
+                // 答錯
+                streak = 0;
+
+                feedbackBox.className = "w-full rounded-2xl p-4 text-center mb-2 bounce-in bg-rose-100 border-2 border-rose-400 text-rose-900";
+                feedbackTitle.innerHTML = "💪 再接再厲！沒關係！";
+
+                if (isEven) {
+                    feedbackText.innerHTML = `仔細看圖案～ <strong>${currentNumber}</strong> 可以兩個兩個剛好配成對，沒有人單獨留下，所以應該是 <span class="text-pink-600 font-black text-xl">偶數</span> 喔！`;
+                } else {
+                    feedbackText.innerHTML = `仔細看圖案～ <strong>${currentNumber}</strong> 排到最後多出了 <span class="text-amber-700 font-black">1 個單獨的</span>，所以應該是 <span class="text-blue-600 font-black text-xl">奇數</span> 喔！`;
+                }
+
+                // 顯示「下一題」按鈕讓學生閱讀解析後手動點擊
+                const nextBtn = document.getElementById('btn-next');
+                nextBtn.classList.remove('hidden');
+                nextBtn.classList.add('flex');
+            }
+
+            // 更新分數顯示
+            scoreDisplay.innerText = score;
+            streakDisplay.innerText = streak;
+
+            // 顯示反饋框
+            feedbackBox.classList.remove('hidden');
+        }
+
+        // 慶祝紙花特效
+        function triggerConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#f43f5e', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+            for (let i = 0; i < 25; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 90 + 5}%`;
+                confetti.style.top = '20%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = `${Math.random() * 0.3}s`;
+
+                container.appendChild(confetti);
+
+                setTimeout(() => confetti.remove(), 1600);
+            }
+        }
+    </script>
+</body>
+</html>
