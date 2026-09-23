@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>平行四邊形割補 · 等積轉化</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #3b82f6;
+      margin-top: -7px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      cursor: pointer;
+    }
+    #canvas {
+      touch-action: none;
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.05);
+      cursor: default;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 font-sans antialiased">
+  <div class="w-full max-w-6xl mx-auto">
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-5 border border-slate-200/60">
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
+        <span class="text-blue-600">▱</span> 平行四邊形任意切割 · 拼成長方形/正方形
+      </h1>
+      <p class="text-slate-500 text-sm mt-1">在空白處拖曳畫出切割線；拖曳粉色或藍色區塊可自由移動。</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-4 border border-slate-200/60 flex flex-col">
+        <canvas id="canvas" width="800" height="500"></canvas>
+        <div class="flex flex-wrap items-center justify-between gap-3 mt-4 text-sm">
+          <div class="flex flex-wrap gap-2">
+            <button id="btnResetCut" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition shadow-sm font-medium">↺ 重置切割線</button>
+            <button id="btnResetPos" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl transition shadow-sm font-medium">🎯 重置位置</button>
+          </div>
+          <div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl">
+            <span class="text-slate-500 font-medium">拼合進度</span>
+            <input type="range" id="sliderMerge" min="0" max="1" step="0.01" value="0" class="w-32 md:w-48">
+            <button id="btnPlayPause" class="w-10 h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow transition text-lg">▶</button>
+          </div>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl">
+          <span class="font-medium text-slate-600">操作提示：</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full bg-pink-400"></span> 拖曳粉色塊 (Part A)</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full bg-blue-400"></span> 拖曳藍色塊 (Part B)</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full bg-red-500"></span> 空白處拖曳畫切割線</span>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-slate-200/60 space-y-4">
+          <h2 class="font-semibold text-slate-700 text-lg">⚙️ 圖形參數（整數格數）</h2>
+          <div>
+            <div class="flex justify-between text-sm text-slate-500 mb-1">
+              <span>底 (b)</span><span id="bVal" class="font-mono font-semibold text-slate-700">6 格</span>
+            </div>
+            <input type="range" id="sliderB" min="2" max="10" step="1" value="6" class="w-full">
+          </div>
+          <div>
+            <div class="flex justify-between text-sm text-slate-500 mb-1">
+              <span>高 (h)</span><span id="hVal" class="font-mono font-semibold text-slate-700">3 格</span>
+            </div>
+            <input type="range" id="sliderH" min="1" max="8" step="1" value="3" class="w-full">
+          </div>
+          <div>
+            <div class="flex justify-between text-sm text-slate-500 mb-1">
+              <span>傾斜角度 (θ)</span><span id="angleVal" class="font-mono font-semibold text-slate-700">45°</span>
+            </div>
+            <input type="range" id="sliderAngle" min="10" max="80" step="1" value="45" class="w-full">
+          </div>
+          <button id="btnEqualBH" class="w-full py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl font-semibold transition shadow-sm border border-amber-200/60 flex items-center justify-center gap-1">
+            ⚖️ 一鍵將底高設為相等 (b = h)
+          </button>
+        </div>
+
+        <div class="bg-blue-50/70 rounded-2xl p-5 border border-blue-200/60 text-sm text-blue-800 space-y-2">
+          <p class="font-semibold">📖 割補原理</p>
+          <p>將平行四邊形沿任意直線切開，平移其中一塊，可拼成與原面積相等的長方形（或正方形）。</p>
+          <p class="font-medium bg-white/70 p-2 rounded-lg">平行四邊形面積 = 拼合後的長方形（或正方形）面積 = 底 × 高</p>
+          <p class="text-xs text-blue-600 pt-1">💡 試試看：甚麼樣的切割線能拼成一個完美的長方形？</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const CW = 800, CH = 500;
+
+      // 圖形參數（整數格數）
+      let b = 6, h = 3, angleDeg = 45;
+
+      // 切割線（世界座標）— 預設為 null，代表沒有切割線
+      let cutLineP1 = null, cutLineP2 = null;
+
+      // 多邊形與分割結果
+      let polyPoints = [];
+      let partA = null, partB = null;
+
+      // 兩塊的平移偏移量（世界座標）
+      let offsetA = {x: 0, y: 0};
+      let offsetB = {x: 0, y: 0};
+
+      // 拼合進度與動畫
+      let mergeProgress = 0;
+      let isAnimating = false;
+      let animationId = null;
+
+      // 互動狀態
+      let draggingPart = null;
+      let dragStartWorld = null;
+      let dragStartOffset = null;
+      let isDrawingCut = false;
+
+      // 視圖變換
+      let viewScale = 1, viewOffsetX = 0, viewOffsetY = 0;
+
+      // ---------- 座標轉換 ----------
+      function worldToCanvas(p) {
+        return {
+          x: (p.x - viewOffsetX) * viewScale,
+          y: CH - (p.y - viewOffsetY) * viewScale
+        };
+      }
+
+      function canvasToWorld(cp) {
+        return {
+          x: (cp.x / viewScale) + viewOffsetX,
+          y: ((CH - cp.y) / viewScale) + viewOffsetY
+        };
+      }
+
+      function updateViewTransform() {
+        let points = [];
+        if (polyPoints.length > 0) {
+          polyPoints.forEach(p => points.push({x: p.x, y: p.y}));
+          polyPoints.forEach(p => points.push({x: p.x + b, y: p.y}));
+        }
+        if (partA) partA.forEach(p => points.push({x: p.x + offsetA.x, y: p.y + offsetA.y}));
+        if (partB) {
+          const shiftB = mergeProgress * b;
+          partB.forEach(p => points.push({x: p.x + offsetB.x + shiftB, y: p.y + offsetB.y}));
+        }
+
+        if (points.length === 0) return;
+        let minX = Math.min(...points.map(p => p.x));
+        let maxX = Math.max(...points.map(p => p.x));
+        let minY = Math.min(...points.map(p => p.y));
+        let maxY = Math.max(...points.map(p => p.y));
+
+        const marginX = 2, marginY = 2;
+        minX -= marginX; maxX += marginX;
+        minY -= marginY; maxY += marginY;
+
+        const worldWidth = maxX - minX;
+        const worldHeight = maxY - minY;
+        const scaleX = CW / worldWidth;
+        const scaleY = CH / worldHeight;
+        viewScale = Math.min(scaleX, scaleY) * 0.9;
+
+        const worldCenterX = (minX + maxX) / 2;
+        const worldCenterY = (minY + maxY) / 2;
+        viewOffsetX = worldCenterX - (CW / 2) / viewScale;
+        viewOffsetY = worldCenterY - (CH / 2) / viewScale;
+      }
+
+      // ---------- 格仔紙背景（固定 1 格 = 1 世界單位） ----------
+      function drawGrid() {
+        const spacing = 1;
+
+        const worldLeft = viewOffsetX;
+        const worldRight = viewOffsetX + CW / viewScale;
+        const worldBottom = viewOffsetY;
+        const worldTop = viewOffsetY + CH / viewScale;
+
+        const startX = Math.floor(worldLeft / spacing) * spacing;
+        const startY = Math.floor(worldBottom / spacing) * spacing;
+
+        ctx.save();
+
+        // 細格線：每 1 單位一條
+        ctx.strokeStyle = '#e0f2fe';
+        ctx.lineWidth = 1;
+
+        for (let x = startX; x <= worldRight + spacing; x += spacing) {
+          const cp = worldToCanvas({x, y: 0});
+          ctx.beginPath();
+          ctx.moveTo(Math.round(cp.x) + 0.5, 0);
+          ctx.lineTo(Math.round(cp.x) + 0.5, CH);
+          ctx.stroke();
+        }
+        for (let y = startY; y <= worldTop + spacing; y += spacing) {
+          const cp = worldToCanvas({x: 0, y});
+          ctx.beginPath();
+          ctx.moveTo(0, Math.round(cp.y) + 0.5);
+          ctx.lineTo(CW, Math.round(cp.y) + 0.5);
+          ctx.stroke();
+        }
+
+        // 粗格線：每 5 單位一條
+        const majorSpacing = 5;
+        const majorStartX = Math.floor(worldLeft / majorSpacing) * majorSpacing;
+        const majorStartY = Math.floor(worldBottom / majorSpacing) * majorSpacing;
+
+        ctx.strokeStyle = '#bae6fd';
+        ctx.lineWidth = 1.8;
+
+        for (let x = majorStartX; x <= worldRight + majorSpacing; x += majorSpacing) {
+          const cp = worldToCanvas({x, y: 0});
+          ctx.beginPath();
+          ctx.moveTo(Math.round(cp.x) + 0.5, 0);
+          ctx.lineTo(Math.round(cp.x) + 0.5, CH);
+          ctx.stroke();
+        }
+        for (let y = majorStartY; y <= worldTop + majorSpacing; y += majorSpacing) {
+          const cp = worldToCanvas({x: 0, y});
+          ctx.beginPath();
+          ctx.moveTo(0, Math.round(cp.y) + 0.5);
+          ctx.lineTo(CW, Math.round(cp.y) + 0.5);
+          ctx.stroke();
+        }
+
+        // 原點十字
+        const originCp = worldToCanvas({x: 0, y: 0});
+        if (originCp.x >= -20 && originCp.x <= CW + 20 && originCp.y >= -20 && originCp.y <= CH + 20) {
+          ctx.strokeStyle = '#60a5fa';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(originCp.x - 10, originCp.y);
+          ctx.lineTo(originCp.x + 10, originCp.y);
+          ctx.moveTo(originCp.x, originCp.y - 10);
+          ctx.lineTo(originCp.x, originCp.y + 10);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      // ---------- 幾何工具 ----------
+      function computePolygon() {
+        const rad = angleDeg * Math.PI / 180;
+        const rawOffsetX = h / Math.tan(rad);
+        const offsetX = Math.round(rawOffsetX);
+        return [
+          {x: 0, y: 0},
+          {x: b, y: 0},
+          {x: b + offsetX, y: h},
+          {x: offsetX, y: h}
+        ];
+      }
+
+      function lineSegIntersect(p1, p2, p3, p4) {
+        const d1x = p2.x - p1.x, d1y = p2.y - p1.y;
+        const d2x = p4.x - p3.x, d2y = p4.y - p3.y;
+        const denom = d1x * d2y - d1y * d2x;
+        if (Math.abs(denom) < 1e-9) return null;
+        const t = ((p3.x - p1.x) * d2y - (p3.y - p1.y) * d2x) / denom;
+        const u = ((p3.x - p1.x) * d1y - (p3.y - p1.y) * d1x) / denom;
+        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+          return {x: p1.x + t * d1x, y: p1.y + t * d1y};
+        }
+        return null;
+      }
+
+      function getLinePolygonIntersections(lineP1, lineP2, polygon) {
+        const intersections = [];
+        for (let i = 0; i < polygon.length; i++) {
+          const a = polygon[i], b2 = polygon[(i + 1) % polygon.length];
+          const inter = lineSegIntersect(lineP1, lineP2, a, b2);
+          if (inter) intersections.push(inter);
+        }
+        const unique = [];
+        const threshold = 0.01;
+        intersections.forEach(p => {
+          if (!unique.some(q => Math.hypot(q.x - p.x, q.y - p.y) < threshold)) {
+            unique.push(p);
+          }
+        });
+        return unique;
+      }
+
+      function splitPolygonByLine(polygon, lineP1, lineP2) {
+        const intersections = getLinePolygonIntersections(lineP1, lineP2, polygon);
+        if (intersections.length < 2) return null;
+
+        let p1 = intersections[0], p2 = intersections[1];
+        let maxDist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+        for (let i = 0; i < intersections.length; i++) {
+          for (let j = i + 1; j < intersections.length; j++) {
+            const d = Math.hypot(intersections[i].x - intersections[j].x, intersections[i].y - intersections[j].y);
+            if (d > maxDist) { maxDist = d; p1 = intersections[i]; p2 = intersections[j]; }
+          }
+        }
+
+        const eps = 1e-6;
+        const polyWithCuts = [];
+        for (let i = 0; i < polygon.length; i++) {
+          const a = polygon[i], b2 = polygon[(i + 1) % polygon.length];
+          polyWithCuts.push({...a});
+          const cutsOnEdge = [];
+          [p1, p2].forEach(p => {
+            const cross = (p.y - a.y) * (b2.x - a.x) - (p.x - a.x) * (b2.y - a.y);
+            if (Math.abs(cross) > eps) return;
+            const dot = (p.x - a.x) * (b2.x - a.x) + (p.y - a.y) * (b2.y - a.y);
+            const lenSq = (b2.x - a.x)**2 + (b2.y - a.y)**2;
+            if (dot > eps && dot < lenSq - eps) cutsOnEdge.push(p);
+          });
+          cutsOnEdge.sort((c1, c2) => {
+            const t1 = (c1.x - a.x) / (b2.x - a.x + 1e-12) || (c1.y - a.y) / (b2.y - a.y + 1e-12);
+            const t2 = (c2.x - a.x) / (b2.x - a.x + 1e-12) || (c2.y - a.y) / (b2.y - a.y + 1e-12);
+            return t1 - t2;
+          });
+          cutsOnEdge.forEach(c => polyWithCuts.push({...c}));
+        }
+
+        let idx1 = -1, idx2 = -1;
+        for (let i = 0; i < polyWithCuts.length; i++) {
+          if (idx1 === -1 && Math.hypot(polyWithCuts[i].x - p1.x, polyWithCuts[i].y - p1.y) < eps) idx1 = i;
+          if (idx2 === -1 && Math.hypot(polyWithCuts[i].x - p2.x, polyWithCuts[i].y - p2.y) < eps) idx2 = i;
+        }
+        if (idx1 === -1 || idx2 === -1) return null;
+        if (idx1 > idx2) [idx1, idx2] = [idx2, idx1];
+
+        const part1 = [], part2 = [];
+        for (let i = idx1; i <= idx2; i++) part1.push(polyWithCuts[i]);
+        for (let i = idx2; i < polyWithCuts.length; i++) part2.push(polyWithCuts[i]);
+        for (let i = 0; i <= idx1; i++) part2.push(polyWithCuts[i]);
+
+        return [part1, part2];
+      }
+
+      function polygonCentroid(poly) {
+        let cx = 0, cy = 0, area = 0;
+        for (let i = 0; i < poly.length; i++) {
+          const j = (i + 1) % poly.length;
+          const cross = poly[i].x * poly[j].y - poly[j].x * poly[i].y;
+          area += cross;
+          cx += (poly[i].x + poly[j].x) * cross;
+          cy += (poly[i].y + poly[j].y) * cross;
+        }
+        area /= 2;
+        if (Math.abs(area) < 1e-9) return {x: 0, y: 0};
+        return {x: cx / (6 * area), y: cy / (6 * area)};
+      }
+
+      function pointInPolygon(point, polygon) {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+          const xi = polygon[i].x, yi = polygon[i].y;
+          const xj = polygon[j].x, yj = polygon[j].y;
+          const intersect = ((yi > point.y) !== (yj > point.y)) &&
+              (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
+          if (intersect) inside = !inside;
+        }
+        return inside;
+      }
+
+      // ---------- 切割邏輯 ----------
+      function recomputeCut() {
+        offsetA = {x: 0, y: 0};
+        offsetB = {x: 0, y: 0};
+        mergeProgress = 0;
+        document.getElementById('sliderMerge').value = 0;
+
+        if (!cutLineP1 || !cutLineP2) {
+          partA = polyPoints.map(p => ({...p}));
+          partB = null;
+          return;
+        }
+        if (Math.hypot(cutLineP2.x - cutLineP1.x, cutLineP2.y - cutLineP1.y) < 0.1) {
+          partA = polyPoints.map(p => ({...p}));
+          partB = null;
+          return;
+        }
+
+        const result = splitPolygonByLine(polyPoints, cutLineP1, cutLineP2);
+        if (!result) {
+          partA = polyPoints.map(p => ({...p}));
+          partB = null;
+          return;
+        }
+
+        const [part1, part2] = result;
+        const c1 = polygonCentroid(part1), c2 = polygonCentroid(part2);
+
+        if (c1.x > c2.x) {
+          partA = part2;
+          partB = part1;
+        } else {
+          partA = part1;
+          partB = part2;
+        }
+      }
+
+      function resetCut() {
+        cutLineP1 = null;
+        cutLineP2 = null;
+        offsetA = {x: 0, y: 0};
+        offsetB = {x: 0, y: 0};
+        mergeProgress = 0;
+        document.getElementById('sliderMerge').value = 0;
+        partA = polyPoints.map(p => ({...p}));
+        partB = null;
+      }
+
+      function resetPositions() {
+        offsetA = {x: 0, y: 0};
+        offsetB = {x: 0, y: 0};
+        mergeProgress = 0;
+        document.getElementById('sliderMerge').value = 0;
+      }
+
+      // ---------- 繪製 ----------
+      function drawPolygon(poly, fillColor, strokeColor) {
+        if (!poly || poly.length < 3) return;
+        ctx.beginPath();
+        const first = worldToCanvas(poly[0]);
+        ctx.moveTo(first.x, first.y);
+        for (let i = 1; i < poly.length; i++) {
+          const p = worldToCanvas(poly[i]);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      function getShiftedB() {
+        if (!partB) return null;
+        const shiftB = mergeProgress * b;
+        return partB.map(p => ({
+          x: p.x + offsetB.x + shiftB,
+          y: p.y + offsetB.y
+        }));
+      }
+
+      function getShiftedA() {
+        if (!partA) return null;
+        return partA.map(p => ({
+          x: p.x + offsetA.x,
+          y: p.y + offsetA.y
+        }));
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, CW, CH);
+        updateViewTransform();
+        drawGrid();
+
+        // 原始平行四邊形虛線輪廓
+        if (polyPoints.length > 0) {
+          ctx.beginPath();
+          const first = worldToCanvas(polyPoints[0]);
+          ctx.moveTo(first.x, first.y);
+          for (let i = 1; i < polyPoints.length; i++) {
+            const p = worldToCanvas(polyPoints[i]);
+            ctx.lineTo(p.x, p.y);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        const shiftedA = getShiftedA();
+        const shiftedB = getShiftedB();
+
+        if (shiftedA) drawPolygon(shiftedA, 'rgba(249, 168, 212, 0.75)', '#db2777');
+        if (shiftedB) drawPolygon(shiftedB, 'rgba(165, 216, 255, 0.75)', '#2563eb');
+
+        // 繪製切割線（只有當 cutLineP1/cutLineP2 有值時，即正在畫線時）
+        if (cutLineP1 && cutLineP2) {
+          const c1 = worldToCanvas(cutLineP1);
+          const c2 = worldToCanvas(cutLineP2);
+          ctx.beginPath();
+          ctx.moveTo(c1.x, c1.y);
+          ctx.lineTo(c2.x, c2.y);
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 3;
+          ctx.setLineDash([8, 6]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        if (mergeProgress > 0.98 && partB) {
+          ctx.fillStyle = '#1e293b';
+          ctx.font = 'bold 18px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('✨ 拼合完成！面積不變', CW / 2, 40);
+        }
+      }
+
+      // ---------- 更新 UI ----------
+      function updateUI() {
+        document.getElementById('bVal').textContent = b + ' 格';
+        document.getElementById('hVal').textContent = h + ' 格';
+        document.getElementById('angleVal').textContent = angleDeg + '°';
+      }
+
+      function updateAll() {
+        polyPoints = computePolygon();
+        recomputeCut();
+        updateUI();
+        draw();
+      }
+
+      // ---------- 命中測試 ----------
+      function hitTestPart(worldPoint) {
+        const shiftedB = getShiftedB();
+        if (shiftedB && pointInPolygon(worldPoint, shiftedB)) return 'B';
+
+        const shiftedA = getShiftedA();
+        if (shiftedA && pointInPolygon(worldPoint, shiftedA)) return 'A';
+
+        return null;
+      }
+
+      // ---------- 事件處理 ----------
+      function onPointerDown(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const cp = {
+          x: (clientX - rect.left) * (CW / rect.width),
+          y: (clientY - rect.top) * (CH / rect.height)
+        };
+        const world = canvasToWorld(cp);
+
+        const hit = hitTestPart(world);
+
+        if (hit) {
+          draggingPart = hit;
+          dragStartWorld = world;
+          dragStartOffset = hit === 'A' ? {...offsetA} : {...offsetB};
+          canvas.style.cursor = 'grabbing';
+        } else {
+          isDrawingCut = true;
+          cutLineP1 = world;
+          cutLineP2 = world;
+          canvas.style.cursor = 'crosshair';
+        }
+      }
+
+      function onPointerMove(clientX, clientY) {
+        if (!draggingPart && !isDrawingCut) return;
+        const rect = canvas.getBoundingClientRect();
+        const cp = {
+          x: (clientX - rect.left) * (CW / rect.width),
+          y: (clientY - rect.top) * (CH / rect.height)
+        };
+        const world = canvasToWorld(cp);
+
+        if (draggingPart) {
+          const dx = world.x - dragStartWorld.x;
+          const dy = world.y - dragStartWorld.y;
+          if (draggingPart === 'A') {
+            offsetA = {x: dragStartOffset.x + dx, y: dragStartOffset.y + dy};
+          } else {
+            offsetB = {x: dragStartOffset.x + dx, y: dragStartOffset.y + dy};
+          }
+          draw();
+        } else if (isDrawingCut) {
+          cutLineP2 = world;
+          draw();
+        }
+      }
+
+      function onPointerUp() {
+        if (draggingPart) {
+          draggingPart = null;
+          dragStartWorld = null;
+          dragStartOffset = null;
+          canvas.style.cursor = 'default';
+        } else if (isDrawingCut) {
+          isDrawingCut = false;
+          canvas.style.cursor = 'default';
+          if (cutLineP1 && cutLineP2 &&
+              Math.hypot(cutLineP2.x - cutLineP1.x, cutLineP2.y - cutLineP1.y) >= 0.2) {
+            recomputeCut();
+          } else {
+            resetCut();
+          }
+          cutLineP1 = null;
+          cutLineP2 = null;
+        }
+        draw();
+      }
+
+      // 滑鼠事件
+      canvas.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        onPointerDown(e.clientX, e.clientY);
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (draggingPart || isDrawingCut) {
+          e.preventDefault();
+          onPointerMove(e.clientX, e.clientY);
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (draggingPart || isDrawingCut) {
+          onPointerUp();
+        }
+      });
+
+      // 觸控事件
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        onPointerDown(touch.clientX, touch.clientY);
+      }, {passive: false});
+
+      window.addEventListener('touchmove', (e) => {
+        if (draggingPart || isDrawingCut) {
+          e.preventDefault();
+          const touch = e.touches[0];
+          onPointerMove(touch.clientX, touch.clientY);
+        }
+      }, {passive: false});
+
+      window.addEventListener('touchend', () => {
+        if (draggingPart || isDrawingCut) {
+          onPointerUp();
+        }
+      });
+
+      window.addEventListener('touchcancel', () => {
+        if (draggingPart || isDrawingCut) {
+          onPointerUp();
+        }
+      });
+
+      // 滑桿事件
+      document.getElementById('sliderB').addEventListener('input', (e) => {
+        b = parseInt(e.target.value, 10);
+        updateAll();
+      });
+
+      document.getElementById('sliderH').addEventListener('input', (e) => {
+        h = parseInt(e.target.value, 10);
+        updateAll();
+      });
+
+      document.getElementById('sliderAngle').addEventListener('input', (e) => {
+        angleDeg = parseInt(e.target.value, 10);
+        updateAll();
+      });
+
+      document.getElementById('sliderMerge').addEventListener('input', (e) => {
+        mergeProgress = parseFloat(e.target.value);
+        if (isAnimating) {
+          isAnimating = false;
+          cancelAnimationFrame(animationId);
+          document.getElementById('btnPlayPause').textContent = '▶';
+        }
+        draw();
+      });
+
+      // 按鈕事件
+      document.getElementById('btnResetCut').addEventListener('click', () => {
+        resetCut();
+        draw();
+      });
+
+      document.getElementById('btnResetPos').addEventListener('click', () => {
+        resetPositions();
+        draw();
+      });
+
+      document.getElementById('btnEqualBH').addEventListener('click', () => {
+        const common = Math.max(1, Math.min(8, Math.min(b, 10)));
+        b = common;
+        h = common;
+        document.getElementById('sliderB').value = b;
+        document.getElementById('sliderH').value = h;
+        updateAll();
+      });
+
+      document.getElementById('btnPlayPause').addEventListener('click', () => {
+        if (isAnimating) {
+          isAnimating = false;
+          cancelAnimationFrame(animationId);
+          document.getElementById('btnPlayPause').textContent = '▶';
+        } else {
+          if (!partB) return;
+          isAnimating = true;
+          document.getElementById('btnPlayPause').textContent = '⏸';
+
+          const startProgress = mergeProgress;
+          const startTime = performance.now();
+          const duration = 1200;
+
+          const animate = (now) => {
+            if (!isAnimating) return;
+            const elapsed = now - startTime;
+            const t = Math.min(1, elapsed / duration);
+            const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            mergeProgress = startProgress + (1 - startProgress) * eased;
+            document.getElementById('sliderMerge').value = mergeProgress;
+            draw();
+
+            if (t < 1) {
+              animationId = requestAnimationFrame(animate);
+            } else {
+              mergeProgress = 1;
+              document.getElementById('sliderMerge').value = 1;
+              isAnimating = false;
+              document.getElementById('btnPlayPause').textContent = '▶';
+              draw();
+            }
+          };
+          animationId = requestAnimationFrame(animate);
+        }
+      });
+
+      // 初始化
+      function init() {
+        polyPoints = computePolygon();
+        resetCut();  // 預設無切割線
+        updateUI();
+        draw();
+      }
+
+      init();
+
+      window.addEventListener('resize', () => {
+        draw();
+      });
+
+    })();
+  </script>
+</body>
+</html>
