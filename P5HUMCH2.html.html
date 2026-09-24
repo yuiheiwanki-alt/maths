@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家居及公共安全大挑戰</title>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --primary-dark: #357ABD;
+            --success: #2ECC71;
+            --error: #E74C3C;
+            --warning: #F39C12;
+            --bg: #F4F7F9;
+            --card-bg: #FFFFFF;
+            --text: #2C3E50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 1.4rem; }
+        .score-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .screen {
+            padding: 25px;
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .screen.active { display: flex; }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        .welcome-screen h2 { font-size: 2rem; color: var(--primary); }
+        .welcome-screen p { font-size: 1.1rem; line-height: 1.6; color: #666; max-width: 600px; }
+
+        /* Question Common */
+        .stage-title {
+            font-size: 1.2rem;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .scenario-box {
+            background: #EBF3FA;
+            border-left: 5px solid var(--primary);
+            padding: 15px;
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+
+        /* Options Grid */
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option-card {
+            background: #F8F9FA;
+            border: 2px solid #E9ECEF;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-card:hover {
+            border-color: var(--primary);
+            background: #F0F7FF;
+        }
+
+        .option-card.selected {
+            border-color: var(--primary);
+            background: #E3F2FD;
+        }
+
+        /* Feedback Area */
+        .feedback-box {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-size: 1rem;
+            line-height: 1.5;
+            animation: fadeIn 0.3s forwards;
+        }
+        .feedback-box.correct {
+            background: #D4EDDA;
+            color: #155724;
+            border: 1px solid #C3E6CB;
+        }
+        .feedback-box.wrong {
+            background: #F8D7DA;
+            color: #721C24;
+            border: 1px solid #F5C6CB;
+        }
+
+        /* Order Task */
+        .order-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .order-item {
+            background: #FFF;
+            border: 2px dashed var(--primary);
+            padding: 12px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+        .order-item .badge {
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* End Screen */
+        .end-screen {
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        .stars { font-size: 3rem; color: #FFD700; }
+        .summary-list {
+            text-align: left;
+            background: #F8F9FA;
+            padding: 20px;
+            border-radius: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            width: 100%;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Vibration Animation */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+        .vibrate { animation: shake 0.4s ease-in-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .footer-nav {
+            margin-top: auto;
+            display: flex;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <header>
+        <h1 id="game-header-title">家居及公共安全大挑戰</h1>
+        <div class="score-badge">答對：<span id="score-val">0</span> / 13 題</div>
+    </header>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen active welcome-screen">
+        <h2>🛡️ 家居及公共安全大挑戰</h2>
+        <p>歡迎參加安全知識大考驗！本遊戲共設有 6 個關卡，涵蓋火警逃生、氣體泄漏、觸電救援及公共場所安全等常見情境。</p>
+        <p>準備好展現你的安全智慧，挑戰答對全部 13 題嗎？</p>
+        <button class="btn" onclick="startGame()">立即開始挑戰</button>
+    </div>
+
+    <!-- Gameplay Screen -->
+    <div id="game-screen" class="screen">
+        <div class="stage-title">
+            <span id="stage-name">第 1 關</span>
+            <span id="progress-text">題 1 / 4</span>
+        </div>
+        <div class="scenario-box" id="scenario-text">情境說明...</div>
+
+        <div id="interaction-area">
+            <!-- Dynamic Content Injected Here -->
+        </div>
+
+        <div class="feedback-box" id="feedback-box"></div>
+
+        <div class="footer-nav">
+            <button class="btn" id="next-btn" style="display:none;" onclick="nextQuestion()">下一題 ➔</button>
+        </div>
+    </div>
+
+    <!-- Summary / End Screen -->
+    <div id="end-screen" class="screen end-screen">
+        <h2>🎉 挑戰完成！</h2>
+        <div class="stars" id="star-rating">⭐⭐⭐</div>
+        <p style="font-size:1.3rem; font-weight:bold;">最終答對：<span id="final-score">0</span> / 13 題</p>
+        
+        <div class="summary-list">
+            <h3>📖 安全知識總結備忘：</h3>
+            <ul style="padding-left: 20px; margin-top: 10px;">
+                <li><strong>火警留守：</strong>用濕毛巾封門縫，撥打 999 報案，移至未受濃煙影響的房間並於窗口掛被單求救。</li>
+                <li><strong>離家逃生：</strong>帶備逃生三寶（手機、鑰匙、濕毛巾），順手關門，切勿搭乘升降機，伏地爬行避濃煙。</li>
+                <li><strong>氣體泄漏：</strong>先關掣開窗散氣，再拍門通知鄰居，到安全地方才報警。嚴禁開關任何電器火花引爆！</li>
+                <li><strong>觸電救援：</strong>切斷電源為首要，配帶絕緣膠手套、踩膠墊，用乾木棒分開傷者與電源。</li>
+                <li><strong>商場安全：</strong>注意四周環境危機，遠離過高堆疊貨物、地面積水，切勿奔跑或讓長者提過重物品。</li>
+                <li><strong>搬運重物：</strong>保持腰背挺直，先蹲下運用腿部肌肉力量，並將重物貼近身體搬起。</li>
+            </ul>
+        </div>
+
+        <button class="btn" onclick="restartGame()">🔄 一鍵重玩</button>
+    </div>
+</div>
+
+<script>
+    // Game Data Definition (Total 13 Questions)
+    const gameData = [
+        // STAGE 1 (4 Questions)
+        {
+            stage: 1,
+            title: "🔥 第 1 關 火警留在家中（八樓濃煙情境）",
+            scenario: "你身處八樓家中，外面走廊充滿濃煙無法外出逃生，你需要留在室內等候救援。",
+            questions: [
+                {
+                    type: "mc",
+                    q: "為了防止濃煙從門縫滲入室內，你應該怎麼做？",
+                    options: [
+                        { text: "用濕毛巾或濕布塞住門縫", correct: true, exp: "課本知識：濕毛巾能有效堵塞門縫，阻止有毒濃煙滲入室內。" },
+                        { text: "開啟大門通風", correct: false, exp: "開啟大門會讓走廊的濃煙迅速湧入室內，非常危險！" },
+                        { text: "用乾報紙紙箱遮擋", correct: false, exp: "乾紙張無法阻擋氣體滲透，且屬於易燃物品。" },
+                        { text: "打開扇門用風扇吹走濃煙", correct: false, exp: "開門會引入濃煙，風扇亦可能將濃煙抽入室內。" }
+                    ]
+                },
+                {
+                    type: "mc",
+                    q: "受困室內時，應撥打什麼電話求助及提供所在位置？",
+                    options: [
+                        { text: "致電 999 報警求助", correct: true, exp: "課本知識：遇上緊急火警應立即致電 999，明確說明地址與受困位置。" },
+                        { text: "致電 1823 政府熱線", correct: false, exp: "1823 是非緊急政府服務熱線，無法及時處理緊急火警事故。" },
+                        { text: "致電天氣查詢熱線", correct: false, exp: "天氣熱線無法提供消防救援服務。" },
+                        { text: "等待親友致電給你", correct: false, exp: "應主動致電緊急求救熱線，爭取黃金救援時間。" }
+                    ]
+                },
+                {
+                    type: "mc",
+                    q: "在屋內等待救援時，應選擇前往哪裡？",
+                    options: [
+                        { text: "前往未受濃煙影響且有窗戶的房間", correct: true, exp: "課本知識：選擇有對外窗戶且未受濃煙侵襲的房間，有利於呼吸及呼救。" },
+                        { text: "藏身於密閉無窗的雜物房", correct: false, exp: "無窗密閉房間空氣不流通，且外界難以察覺你的位置。" },
+                        { text: "躲在廚房易燃物旁", correct: false, exp: "廚房有瓦斯管道及易燃物，並非安全避難點。" },
+                        { text: "躲在床底或衣櫃內", correct: false, exp: "躲藏在隱蔽處會增加消防員搜救的難度。" }
+                    ]
+                },
+                {
+                    type: "mc",
+                    q: "如何向窗外的救援人員發出清晰的求救訊號？",
+                    options: [
+                        { text: "在窗口揮動或掛出鮮色被單/衣物", correct: true, exp: "課本知識：在窗口掛出或揮動鮮色被單，能讓地面救援人員迅速鎖定位置。" },
+                        { text: "點燃紙張發出火光", correct: false, exp: "在室內點火極易引發二次火災，非常危險！" },
+                        { text: "靜靜坐在窗邊等待", correct: false, exp: "靜止狀態下，救援人員很難在地面發現室內有人受困。" },
+                        { text: "向窗外拋擲重物", correct: false, exp: "高空擲物極易擊中路人或救援人員，造成意外。" }
+                    ]
+                }
+            ]
+        },
+        // STAGE 2 (4 Questions)
+        {
+            stage: 2,
+            title: "🔥 第 2 關 離家逃生（五樓情境）",
+            scenario: "你身處五樓，家門外未見濃煙，情況許可下你需要迅速離家逃生。",
+            questions: [
+                {
+                    type: "mc",
+                    q: "逃生時必須隨身帶備的「逃生三寶」是什麼？",
+                    options: [
+                        { text: "手機、鑰匙、濕毛巾", correct: true, exp: "課本知識：手機用於求救，鑰匙防備無路可退時折返，濕毛巾防煙。" },
+                        { text: "錢包、遊戲機、水壺", correct: false, exp: "這些不是逃生急需物品，切勿浪費時間整理。" },
+                        { text: "護照、玩具、手電筒", correct: false, exp: "逃生應保持輕便，以「逃生三寶」為最優先。" },
+                        { text: "濕毛巾、雨傘、筆記本", correct: false, exp: "雨傘及筆記本對火警逃生沒有協助。" }
+                    ]
+                },
+                {
+                    type: "mc",
+                    q: "離開單位門口時，順手做什麼動作最重要？",
+                    options: [
+                        { text: "關上大門", correct: true, exp: "課本知識：關上大門能有效阻止火勢及濃煙擴散至走廊及其他單位。" },
+                        { text: "鎖上三道門鎖", correct: false, exp: "繁複鎖門會延誤逃生時間，順手關門即可。" },
+                        { text: "打開大門讓空氣流通", correct: false, exp: "開門會形成抽風效應，助長火勢快速擴散。" },
+                        { text: "在大門貼上告示", correct: false, exp: "緊急逃生時切勿浪費時間做無關動作。" }
+                    ]
+                },
+                {
+                    type: "mc",
+                    q: "向下逃生時，應該選擇哪種通道？",
+                    options: [
+                        { text: "使用後備樓梯步行下樓，切勿搭乘升降機", correct: true, exp: "課本知識：火警時升降機隨時會因斷電而故障停困，必須行樓梯。" },
+                        { text: "搭乘高速升降機迅速離開", correct: false, exp: "火警時升降機極易因電力中斷而變成「井道毒氣室」。" },
+                        { text: "搭乘載貨升降機", correct: false, exp: "所有升降機在火警時均不應使用。" },
+                        { text: "跳過防火門直接往下衝", correct: false, exp: "應冷靜沿防煙樓梯有序向下逃生。" }
+                    ]
+                },
+                {
+                    type: "mc",
+                    q: "逃生途中若遇到少量濃煙，應採取什麼姿勢移動？",
+                    options: [
+                        { text: "用濕毛巾掩口鼻，伏地爬行前進", correct: true, exp: "課本知識：濃煙向上升，貼近地面的空氣較為新鮮及清晰。" },
+                        { text: "站立快速向前跑步", correct: false, exp: "站立會吸入上方大量有毒濃煙及高溫氣體。" },
+                        { text: "閉上眼睛向上跳躍", correct: false, exp: "跳躍會更接近上方濃煙，極易窒息。" },
+                        { text: "仰臥躺在地上推進", correct: false, exp: "仰臥無法觀察前方路況，伏地姿勢才是正確做法。" }
+                    ]
+                }
+            ]
+        },
+        // STAGE 3 (2 Questions)
+        {
+            stage: 3,
+            title: "💨 第 3 關 氣體泄漏事故處理",
+            scenario: "在家中突聞到濃烈氣體（如煮食瓦斯）味，請按正確安全順序處理，並注意禁忌行為。",
+            questions: [
+                {
+                    type: "sequence",
+                    q: "請按正確的「先後次序」排列處理氣體泄漏的步驟：",
+                    steps: [
+                        { id: 1, text: "開窗散氣（關閉氣體總掣）" },
+                        { id: 2, text: "拍門通知鄰居一同疏散" },
+                        { id: 3, text: "到達戶外安全地方後才報警" }
+                    ],
+                    correctOrder: [1, 2, 3],
+                    exp: "課本知識：首先關掣開窗減少氣體積聚；隨後拍門通知鄰居離開；最後前往戶外安全地點才打電話報警。"
+                },
+                {
+                    type: "mc",
+                    q: "發現氣體泄漏時，為什麼「切勿開關任何電器或抽氣扇」？",
+                    options: [
+                        { text: "開關時產生的微小火花可引發高濃度氣體爆炸", correct: true, exp: "課本知識：開關電器（包括抽氣扇、按燈開關）產生的微小電火花，足以引爆高濃度氣體！" },
+                        { text: "會浪費電力", correct: false, exp: "安全問題遠比電費重要得多。" },
+                        { text: "會令電器發生故障損壞", correct: false, exp: "主因是防止電火花引發劇烈爆炸事故。" },
+                        { text: "會使氣體的味道變得更濃烈", correct: false, exp: "電器運轉不會改變氣體味道，但開關產生的火花非常致命。" }
+                    ]
+                }
+            ]
+        },
+        // STAGE 4 (1 Question)
+        {
+            stage: 4,
+            title: "⚡ 第 4 關 觸電救援行動",
+            scenario: "有人意外觸電倒地，現場仍有電源連接。請從下列 6 個選項中挑選出 5 個「正確安全」的救援做法：",
+            questions: [
+                {
+                    type: "multi",
+                    q: "請選出 5 個正確的做法（選錯會提示原因）：",
+                    options: [
+                        { text: "立刻關閉總電源開關", correct: true, exp: "正確！切斷電源是救援觸電者的首要安全步驟。" },
+                        { text: "戴上絕緣膠手套才接觸環境", correct: true, exp: "正確！絕緣手套可防止救援者自身觸電。" },
+                        { text: "用乾燥的木棒把傷者與電源分開", correct: true, exp: "正確！乾木棒不導電，是安全隔離電源的工具。" },
+                        { text: "站在絕緣膠墊或乾燥木板上進行救援", correct: true, exp: "正確！墊高雙腳絕緣，能避免電流經人體傳導至地面。" },
+                        { text: "立即致電 999 呼叫救護車", correct: true, exp: "正確！及時尋求專業醫療救援至關重要。" },
+                        { text: "直接用徒手拉開觸電者", correct: false, exp: "危險！人體會導電，徒手拉開傷者會令救援者同時觸電倒地！" }
+                    ],
+                    requiredCount: 5
+                }
+            ]
+        },
+        // STAGE 5 (1 Question)
+        {
+            stage: 5,
+            title: "🛍️ 第 5 關 商場危機大搜查",
+            scenario: "在繁忙的商場環境中，隱藏著許多潛在危險。請從下列選項中找出 4 個「危險不安全」的情境：",
+            questions: [
+                {
+                    type: "multi",
+                    q: "請從 5 個選項中選出 4 個「商場危險行為或情境」：",
+                    options: [
+                        { text: "長者獨自搬運過於重物", correct: true, exp: "正確！長者提過重物品容易扭傷腰部或失去平衡跌倒。" },
+                        { text: "小朋友在繁忙的人行通道上奔跑", correct: true, exp: "正確！在商場內奔跑極易撞傷他人或自己摔倒。" },
+                        { text: "地上有瀉漏的飲品未清掃", correct: true, exp: "正確！地面液體濕滑容易導致過路行人滑倒受傷。" },
+                        { text: "手推車上的貨物堆疊過高", correct: true, exp: "正確！貨物堆過高會遮擋視野，且隨時有倒塌擊中人的危險。" },
+                        { text: "行人自覺靠左行走並靠緊扶手", correct: false, exp: "這是安全的良好行為！靠邊行走並扶緊扶手能預防跌倒事故。" }
+                    ],
+                    requiredCount: 4
+                }
+            ]
+        },
+        // STAGE 6 (1 Question)
+        {
+            stage: 6,
+            title: "💪 第 6 關 搬重物智慧",
+            scenario: "地面有一箱沉重的物品需要搬運，哪一種姿勢才是保護脊椎、最省力且安全的正確方法？",
+            questions: [
+                {
+                    type: "mc",
+                    q: "請選擇正確的搬重物姿勢組合：",
+                    options: [
+                        { text: "先屈膝蹲下、保持腰背挺直、運用腿力起立、將重物貼近身體", correct: true, exp: "課本知識：運用腿部大肌肉發力，腰背挺直並緊貼重物，能有效保護脊椎不致受傷。" },
+                        { text: "雙腿直立、彎曲腰背俯身彎腰搬起重物", correct: false, exp: "錯誤！彎腰直接提重物會給腰椎帶來巨大壓力，極易造成腰部扭傷。" },
+                        { text: "手臂伸直遠離身體將重物硬拉起來", correct: false, exp: "錯誤！重物遠離身體會倍增手臂及腰部負擔，容易受傷。" },
+                        { text: "身體向一側扭轉並快速猛力提起", correct: false, exp: "錯誤！扭轉身體時發力極易造成椎間盤突出或肌肉拉傷。" }
+                    ]
+                }
+            ]
+        }
+    ];
+
+    // Game State
+    let currentStageIndex = 0;
+    let currentQuestionIndex = 0;
+    let correctCount = 0;
+    let userOrder = [];
+    let selectedMulti = [];
+
+    // Helper: Shuffle Array
+    function shuffle(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // Trigger Device Vibration
+    function triggerVibrate() {
+        if ("vibrate" in navigator) {
+            navigator.vibrate(200);
+        }
+        const container = document.getElementById('game-container');
+        container.classList.add('vibrate');
+        setTimeout(() => container.classList.remove('vibrate'), 400);
+    }
+
+    function addCorrect() {
+        correctCount++;
+        document.getElementById('score-val').innerText = correctCount;
+    }
+
+    function startGame() {
+        currentStageIndex = 0;
+        currentQuestionIndex = 0;
+        correctCount = 0;
+        document.getElementById('score-val').innerText = correctCount;
+        showScreen('game-screen');
+        loadQuestion();
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function loadQuestion() {
+        const stageData = gameData[currentStageIndex];
+        const qData = stageData.questions[currentQuestionIndex];
+
+        document.getElementById('stage-name').innerText = stageData.title;
+        document.getElementById('progress-text').innerText = `進度：第 ${currentQuestionIndex + 1} / ${stageData.questions.length} 題`;
+        document.getElementById('scenario-text').innerText = stageData.scenario;
+        document.getElementById('next-btn').style.display = 'none';
+
+        const feedbackBox = document.getElementById('feedback-box');
+        feedbackBox.style.display = 'none';
+        feedbackBox.className = 'feedback-box';
+
+        const area = document.getElementById('interaction-area');
+        area.innerHTML = '';
+
+        if (qData.type === 'mc') {
+            renderMC(qData, area);
+        } else if (qData.type === 'sequence') {
+            renderSequence(qData, area);
+        } else if (qData.type === 'multi') {
+            renderMulti(qData, area);
+        }
+    }
+
+    /* RENDER MULTIPLE CHOICE */
+    function renderMC(qData, container) {
+        const title = document.createElement('p');
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '15px';
+        title.innerText = qData.q;
+        container.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'options-grid';
+
+        const shuffledOptions = shuffle(qData.options);
+
+        shuffledOptions.forEach(opt => {
+            const card = document.createElement('div');
+            card.className = 'option-card';
+            card.innerText = opt.text;
+            card.onclick = () => handleMCAnswer(card, opt, grid);
+            grid.appendChild(card);
+        });
+
+        container.appendChild(grid);
+    }
+
+    function handleMCAnswer(selectedCard, option, grid) {
+        const cards = grid.querySelectorAll('.option-card');
+        cards.forEach(c => c.style.pointerEvents = 'none');
+
+        const feedback = document.getElementById('feedback-box');
+        feedback.style.display = 'block';
+
+        if (option.correct) {
+            selectedCard.style.borderColor = 'var(--success)';
+            selectedCard.style.background = '#E8F8F0';
+            feedback.className = 'feedback-box correct';
+            feedback.innerHTML = `<strong>✅ 答對了！</strong><br>${option.exp}`;
+            addCorrect();
+        } else {
+            selectedCard.style.borderColor = 'var(--error)';
+            selectedCard.style.background = '#FDE8E8';
+            triggerVibrate();
+            feedback.className = 'feedback-box wrong';
+            feedback.innerHTML = `<strong>❌ 答錯了！</strong><br>${option.exp}`;
+        }
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    /* RENDER SEQUENCE TASK */
+    function renderSequence(qData, container) {
+        userOrder = [];
+        const title = document.createElement('p');
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '10px';
+        title.innerText = qData.q;
+        container.appendChild(title);
+
+        const list = document.createElement('div');
+        list.className = 'order-list';
+        list.id = 'seq-list';
+
+        const shuffledSteps = shuffle(qData.steps);
+        shuffledSteps.forEach(step => {
+            const item = document.createElement('div');
+            item.className = 'order-item';
+            item.innerText = step.text;
+            item.onclick = () => handleSequenceClick(step, item, qData);
+            list.appendChild(item);
+        });
+
+        container.appendChild(list);
+
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'btn';
+        resetBtn.style.padding = '8px 16px';
+        resetBtn.style.fontSize = '0.9rem';
+        resetBtn.style.background = '#718096';
+        resetBtn.innerText = '↺ 重置選擇順序';
+        resetBtn.onclick = () => loadQuestion();
+        container.appendChild(resetBtn);
+    }
+
+    function handleSequenceClick(step, element, qData) {
+        if (userOrder.find(s => s.id === step.id)) return;
+
+        userOrder.push(step);
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.innerText = userOrder.length;
+        element.appendChild(badge);
+        element.style.borderColor = 'var(--primary)';
+        element.style.background = '#EBF8FF';
+
+        if (userOrder.length === qData.steps.length) {
+            checkSequenceAnswer(qData);
+        }
+    }
+
+    function checkSequenceAnswer(qData) {
+        const feedback = document.getElementById('feedback-box');
+        feedback.style.display = 'block';
+
+        const isCorrect = userOrder.every((item, idx) => item.id === qData.correctOrder[idx]);
+
+        if (isCorrect) {
+            feedback.className = 'feedback-box correct';
+            feedback.innerHTML = `<strong>✅ 答對了！次序完美正確！</strong><br>${qData.exp}`;
+            addCorrect();
+        } else {
+            triggerVibrate();
+            feedback.className = 'feedback-box wrong';
+            feedback.innerHTML = `<strong>❌ 答錯了！順序有誤！</strong><br>正確順序應為：開窗散氣(關總掣) ➔ 拍門通知鄰居 ➔ 到安全地方報警。<br>${qData.exp}`;
+        }
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    /* RENDER MULTI SELECT TASK */
+    function renderMulti(qData, container) {
+        selectedMulti = [];
+        const title = document.createElement('p');
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '10px';
+        title.innerText = qData.q;
+        container.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'options-grid';
+
+        const shuffledOptions = shuffle(qData.options);
+
+        shuffledOptions.forEach(opt => {
+            const card = document.createElement('div');
+            card.className = 'option-card';
+            card.innerText = opt.text;
+            card.onclick = () => handleMultiSelect(card, opt, qData);
+            grid.appendChild(card);
+        });
+
+        container.appendChild(grid);
+    }
+
+    function handleMultiSelect(card, option, qData) {
+        const feedback = document.getElementById('feedback-box');
+        feedback.style.display = 'block';
+
+        if (!option.correct) {
+            triggerVibrate();
+            card.style.borderColor = 'var(--error)';
+            card.style.background = '#FDE8E8';
+            feedback.className = 'feedback-box wrong';
+            feedback.innerHTML = `<strong>❌ 選錯答案/此非目標選項！</strong><br>${option.exp}`;
+            return;
+        }
+
+        if (selectedMulti.includes(option)) return;
+
+        selectedMulti.push(option);
+        card.classList.add('selected');
+        card.style.borderColor = 'var(--success)';
+        
+        feedback.className = 'feedback-box correct';
+        feedback.innerHTML = `<strong>✅ 找出正確選項！</strong> (${selectedMulti.length}/${qData.requiredCount})<br>${option.exp}`;
+
+        if (selectedMulti.length === qData.requiredCount) {
+            addCorrect();
+            feedback.innerHTML = `<strong>🎉 恭喜！已選出全部 ${qData.requiredCount} 個正確答案！答對此題！</strong>`;
+            document.getElementById('next-btn').style.display = 'block';
+        }
+    }
+
+    function nextQuestion() {
+        const stageData = gameData[currentStageIndex];
+        if (currentQuestionIndex < stageData.questions.length - 1) {
+            currentQuestionIndex++;
+            loadQuestion();
+        } else {
+            if (currentStageIndex < gameData.length - 1) {
+                currentStageIndex++;
+                currentQuestionIndex = 0;
+                loadQuestion();
+            } else {
+                finishGame();
+            }
+        }
+    }
+
+    function finishGame() {
+        showScreen('end-screen');
+        document.getElementById('final-score').innerText = correctCount;
+        
+        const stars = document.getElementById('star-rating');
+        if (correctCount === 13) {
+            stars.innerText = '⭐⭐⭐⭐⭐';
+        } else if (correctCount >= 10) {
+            stars.innerText = '⭐⭐⭐⭐';
+        } else if (correctCount >= 7) {
+            stars.innerText = '⭐⭐⭐';
+        } else {
+            stars.innerText = '⭐⭐';
+        }
+    }
+
+    function restartGame() {
+        startGame();
+    }
+</script>
+</body>
+</html>
