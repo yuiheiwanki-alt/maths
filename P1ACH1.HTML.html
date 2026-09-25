@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>創世大冒險：開心神七天的創造配對遊戲</title>
+    <!-- 可愛圓潤字型 -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #FFF5F7;
+            --card-bg: #FFFFFF;
+            --accent-color: #FF5E8E;
+            --accent-hover: #FF3B73;
+            --text-color: #4A3E3D;
+            --border-color: #FFC2D1;
+            --correct-green: #00E676;
+            --wrong-red: #FF5252;
+            --gold: #FFD600;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 快樂活潑的繽紛漸層背景 */
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 30%, #fbc2eb 70%, #a6c1ee 100%);
+            background-size: 200% 200%;
+            animation: gradientBG 8s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 遊戲容器 */
+        #game-container {
+            width: 100%;
+            max-width: 950px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 36px;
+            box-shadow: 0 20px 50px rgba(255, 105, 180, 0.25);
+            border: 8px solid #FFFFFF;
+            padding: 25px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            position: relative;
+        }
+
+        /* 頁首與分數列 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px dashed #FFD1DC;
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: var(--accent-color);
+            text-shadow: 2px 2px 0px #FFF, 4px 4px 0px #FFD1DC;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .score-board {
+            background: linear-gradient(135deg, #FFE5EC, #FFF0F5);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 17px;
+            font-weight: 900;
+            color: #D81B60;
+            border: 3px solid #FFB6C1;
+            box-shadow: 0 4px 10px rgba(255, 182, 193, 0.4);
+        }
+
+        .btn-small {
+            background: #FFE082;
+            border: 3px solid #FFB300;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 900;
+            color: #5D4037;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 0 #FFB300;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #FFB300;
+        }
+
+        .btn-small:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #FFB300;
+        }
+
+        /* 遊戲提示語 */
+        .instruction-box {
+            background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%);
+            border: 4px solid #FFE082;
+            border-radius: 24px;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 19px;
+            font-weight: 900;
+            color: #F57F17;
+            box-shadow: 0 6px 12px rgba(255, 224, 130, 0.4);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        /* 配對主區域 */
+        .matching-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .matching-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .column-header {
+            text-align: center;
+            font-size: 21px;
+            font-weight: 900;
+            color: var(--accent-color);
+            margin-bottom: 12px;
+            text-shadow: 1px 1px 0px #FFF;
+        }
+
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 可點擊卡片樣式 */
+        .card {
+            background: var(--card-bg);
+            border: 3px solid #FFC2D1;
+            border-radius: 22px;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 0 #FFC2D1;
+            touch-action: manipulation;
+        }
+
+        .card:hover:not(.matched):not(.selected) {
+            transform: translateY(-3px) scale(1.02);
+            background: #FFF0F5;
+            box-shadow: 0 9px 0 #FFC2D1;
+        }
+
+        /* 被點擊選中狀態 */
+        .card.selected {
+            border-color: #FF2A6D;
+            background: #FFE0E9;
+            transform: scale(1.04);
+            box-shadow: 0 8px 0 #FF2A6D;
+        }
+
+        /* 配對成功狀態 */
+        .card.matched {
+            background: #D4EDDA;
+            border-color: #28A745;
+            box-shadow: 0 4px 0 #28A745;
+            color: #155724;
+            cursor: default;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        /* 錯誤搖晃動畫 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        .card.shake {
+            animation: shake 0.4s ease-in-out;
+            border-color: var(--wrong-red);
+            background: #FFEBEE;
+            box-shadow: 0 6px 0 var(--wrong-red);
+        }
+
+        .day-badge {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 15px;
+            box-shadow: 0 2px 5px rgba(255, 107, 107, 0.4);
+        }
+
+        .creation-icon {
+            font-size: 32px;
+            margin-right: 12px;
+            filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.1));
+        }
+
+        .creation-info {
+            display: flex;
+            align-items: center;
+        }
+
+        /* 通關獲勝彈窗 */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(6px);
+            border-radius: 36px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: #FFFDF0;
+            padding: 35px;
+            border-radius: 32px;
+            text-align: center;
+            max-width: 450px;
+            border: 8px solid #FFD600;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: modalBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalBounce {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            font-size: 32px;
+            color: #FF3B73;
+            margin-bottom: 12px;
+            text-shadow: 2px 2px 0 #FFE082;
+        }
+
+        .modal-text {
+            font-size: 18px;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            line-height: 1.5;
+            font-weight: 700;
+        }
+
+        .verse-box {
+            background: #FFF3E0;
+            padding: 14px;
+            border-radius: 18px;
+            font-size: 15px;
+            color: #E65100;
+            margin-bottom: 25px;
+            border: 3px dashed #FFB74D;
+            text-align: left;
+            font-weight: 700;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #FF4081, #FF80AB);
+            color: white;
+            border: none;
+            padding: 14px 36px;
+            font-size: 20px;
+            font-weight: 900;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #C2185B;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #C2185B;
+        }
+
+        .btn-restart:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #C2185B;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <header>
+        <h1>🥳 上帝七天的創造配對 🌈</h1>
+        <div class="top-controls">
+            <div class="score-board">
+                ⭐ 配對進度：<span id="score">0</span> / 7
+            </div>
+            <button class="btn-small" id="reset-btn">🔄 重新開始</button>
+        </div>
+    </header>
+
+    <div class="instruction-box">
+        👉 點擊左邊的「天數」，再點擊右邊對應的「創造物」完成配對！
+    </div>
+
+    <div class="matching-area">
+        <!-- 左欄：創造天數 -->
+        <div>
+            <div class="column-header">📅 創造的順序</div>
+            <div class="list-container" id="days-column"></div>
+        </div>
+
+        <!-- 右欄：創造萬物 -->
+        <div>
+            <div class="column-header">🌿 上帝造的萬物</div>
+            <div class="list-container" id="creations-column"></div>
+        </div>
+    </div>
+
+    <!-- 通關獲勝彈窗 -->
+    <div class="modal-overlay" id="victory-modal">
+        <div class="modal-content">
+            <div style="font-size: 65px; margin-bottom: 10px;">🎉 👑 🎈</div>
+            <h2 class="modal-title">太棒了！完全正確！</h2>
+            <p class="modal-text">你順利完成了上帝七天創造的配對，認識了美麗美好的世界！</p>
+            <div class="verse-box">
+                <b>📖 聖經金句：</b><br>
+                「耶和華造天、地、海和其中的萬物。」<br>
+                <span style="float: right; font-size: 13px;">——《詩篇》146篇6節</span>
+                <div style="clear: both;"></div>
+            </div>
+            <button class="btn-restart" id="modal-restart-btn">再玩一次 🔄</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 創造資料庫
+    const creationData = [
+        { id: 1, day: "第一天", title: "光與晝夜", icon: "☀️", detail: "光、區分晝與夜" },
+        { id: 2, day: "第二天", title: "空氣與天空", icon: "☁️", detail: "空氣、天空" },
+        { id: 3, day: "第三天", title: "陸地與植物", icon: "🌴", detail: "海洋、陸地、花草樹木" },
+        { id: 4, day: "第四天", title: "太陽月亮星星", icon: "🌙", detail: "太陽、月亮、星星" },
+        { id: 5, day: "第五天", title: "飛鳥與魚類", icon: "🐬", detail: "海洋生物與空中飛鳥" },
+        { id: 6, day: "第六天", title: "陸地動物與人", icon: "🦁", detail: "地上的動物、亞當與夏娃" },
+        { id: 7, day: "第七天", title: "安息日", icon: "😴", detail: "天地造萬物完成，神歇息" }
+    ];
+
+    let selectedDayCard = null;
+    let selectedCreationCard = null;
+    let matchedCount = 0;
+
+    // 隨機打亂陣列
+    function shuffle(array) {
+        let newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+    }
+
+    // 初始化遊戲
+    function initGame() {
+        matchedCount = 0;
+        selectedDayCard = null;
+        selectedCreationCard = null;
+        document.getElementById('score').innerText = matchedCount;
+        document.getElementById('victory-modal').style.display = 'none';
+
+        const daysColumn = document.getElementById('days-column');
+        const creationsColumn = document.getElementById('creations-column');
+
+        daysColumn.innerHTML = '';
+        creationsColumn.innerHTML = '';
+
+        const sortedDays = [...creationData];
+        const shuffledCreations = shuffle(creationData);
+
+        // 建立左欄 (天數)
+        sortedDays.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.id = item.id;
+            card.innerHTML = `
+                <span>${item.day}</span>
+                <span class="day-badge">第 ${item.id} 天</span>
+            `;
+            card.onclick = function() { selectDay(this); };
+            daysColumn.appendChild(card);
+        });
+
+        // 建立右欄 (創造物)
+        shuffledCreations.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.id = item.id;
+            card.innerHTML = `
+                <div class="creation-info">
+                    <span class="creation-icon">${item.icon}</span>
+                    <span>${item.detail}</span>
+                </div>
+            `;
+            card.onclick = function() { selectCreation(this); };
+            creationsColumn.appendChild(card);
+        });
+    }
+
+    // 點擊天數卡片
+    function selectDay(card) {
+        if (card.classList.contains('matched')) return;
+
+        if (selectedDayCard === card) {
+            card.classList.remove('selected');
+            selectedDayCard = null;
+            return;
+        }
+
+        if (selectedDayCard) selectedDayCard.classList.remove('selected');
+
+        selectedDayCard = card;
+        selectedDayCard.classList.add('selected');
+
+        checkMatch();
+    }
+
+    // 點擊創造物卡片
+    function selectCreation(card) {
+        if (card.classList.contains('matched')) return;
+
+        if (selectedCreationCard === card) {
+            card.classList.remove('selected');
+            selectedCreationCard = null;
+            return;
+        }
+
+        if (selectedCreationCard) selectedCreationCard.classList.remove('selected');
+
+        selectedCreationCard = card;
+        selectedCreationCard.classList.add('selected');
+
+        checkMatch();
+    }
+
+    // 檢查是否配對成功
+    function checkMatch() {
+        if (selectedDayCard && selectedCreationCard) {
+            const dayId = selectedDayCard.dataset.id;
+            const creationId = selectedCreationCard.dataset.id;
+
+            if (dayId === creationId) {
+                // 配對成功
+                selectedDayCard.classList.remove('selected');
+                selectedCreationCard.classList.remove('selected');
+
+                selectedDayCard.classList.add('matched');
+                selectedCreationCard.classList.add('matched');
+
+                selectedDayCard = null;
+                selectedCreationCard = null;
+
+                matchedCount++;
+                document.getElementById('score').innerText = matchedCount;
+
+                if (matchedCount === creationData.length) {
+                    setTimeout(() => {
+                        document.getElementById('victory-modal').style.display = 'flex';
+                    }, 400);
+                }
+            } else {
+                // 配對失敗
+                const tempDay = selectedDayCard;
+                const tempCreation = selectedCreationCard;
+
+                tempDay.classList.add('shake');
+                tempCreation.classList.add('shake');
+
+                setTimeout(() => {
+                    tempDay.classList.remove('shake', 'selected');
+                    tempCreation.classList.remove('shake', 'selected');
+                }, 400);
+
+                selectedDayCard = null;
+                selectedCreationCard = null;
+            }
+        }
+    }
+
+    // 當 DOM 載入完畢後初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        initGame();
+
+        document.getElementById('reset-btn').onclick = initGame;
+        document.getElementById('modal-restart-btn').onclick = initGame;
+    });
+</script>
+
+</body>
+</html>
