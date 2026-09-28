@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生分數登記系統 (4位數速記版)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-md mb-6">
+        <div class="max-w-6xl mx-auto px-4 py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-500 p-2.5 rounded-xl shadow-inner">
+                    <i class="fa-solid fa-graduation-cap text-2xl text-amber-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">學生分數登記系統</h1>
+                    <p class="text-indigo-200 text-xs mt-0.5">輸入 4 位數（前 2 位學號 + 後 2 位分數）連續極速登記</p>
+                </div>
+            </div>
+            
+            <!-- Class Selector Control -->
+            <div class="flex items-center gap-2 bg-indigo-700/70 p-1.5 rounded-xl border border-indigo-400/30">
+                <label for="classSelect" class="text-xs font-medium pl-2 text-indigo-100 flex items-center gap-1">
+                    <i class="fa-solid fa-school"></i> 班級：
+                </label>
+                <select id="classSelect" onchange="switchClass(this.value)" class="bg-white text-indigo-950 font-bold text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer shadow-sm">
+                    <!-- Dynamic Class Options -->
+                </select>
+                <button onclick="addNewClass()" title="新增班級" class="bg-indigo-500 hover:bg-indigo-400 text-white p-1.5 rounded-lg transition-all text-xs flex items-center justify-center w-8 h-8">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 space-y-6">
+
+        <!-- Quick 4-Digit Input Form -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 transition-all hover:shadow-md">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-amber-500"></i>
+                        極速 4 位數登記
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">例如：輸入 <span class="font-mono font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">0185</span> ＝ <span class="font-bold text-slate-700">01 號</span> 學生獲得 <span class="font-bold text-slate-700">85 分</span></p>
+                </div>
+
+                <!-- Live Key Format Indicator -->
+                <div id="formatPreview" class="text-xs bg-slate-100 px-3 py-2 rounded-xl text-slate-500 font-mono flex items-center gap-2 self-start md:self-auto">
+                    <span>解析預覽：</span>
+                    <span id="previewNo" class="font-bold text-slate-400">學號 --</span>
+                    <span>|</span>
+                    <span id="previewScore" class="font-bold text-slate-400">分數 --</span>
+                </div>
+            </div>
+
+            <!-- Toast Alert Box -->
+            <div id="alertBox" class="hidden mb-4 p-3 rounded-xl text-sm flex items-center justify-between transition-all duration-300">
+                <div class="flex items-center gap-2">
+                    <i id="alertIcon" class="fa-solid"></i>
+                    <span id="alertMessage"></span>
+                </div>
+                <button onclick="hideAlert()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="quickForm" onsubmit="handleFormSubmit(event)" class="flex flex-col sm:flex-row gap-4 items-center">
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 text-lg">
+                        <i class="fa-solid fa-keyboard"></i>
+                    </div>
+                    <input type="text" id="quickInput" maxlength="4" autocomplete="off" placeholder="請輸入 4 位數 (如: 0185)" 
+                        class="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-indigo-100 rounded-2xl font-mono text-2xl tracking-widest text-indigo-900 placeholder-slate-300 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all text-center sm:text-left"
+                        oninput="handleQuickInput(this)" />
+                </div>
+                
+                <button type="submit" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium py-4 px-8 rounded-2xl shadow-sm transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    <i class="fa-solid fa-check"></i>
+                    登記
+                </button>
+            </form>
+        </section>
+
+        <!-- Class Statistics Dashboard -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Progress / Total Count -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                    <i class="fa-solid fa-user-check text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">已登記人數</p>
+                    <p id="statCount" class="text-2xl font-bold text-slate-800 mt-0.5">0 / 26 <span class="text-xs font-normal text-slate-400">人</span></p>
+                </div>
+            </div>
+
+            <!-- Class Average -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <i class="fa-solid fa-calculator text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">班級平均分</p>
+                    <p id="statAvg" class="text-2xl font-bold text-slate-800 mt-0.5">0.0 <span class="text-xs font-normal text-slate-400">分</span></p>
+                </div>
+            </div>
+
+            <!-- Highest Score -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <i class="fa-solid fa-trophy text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">全班最高分</p>
+                    <p id="statMax" class="text-2xl font-bold text-slate-800 mt-0.5">- <span class="text-xs font-normal text-slate-400">分</span></p>
+                </div>
+            </div>
+
+            <!-- Lowest Score -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
+                    <i class="fa-solid fa-arrow-down-short-wide text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">全班最低分</p>
+                    <p id="statMin" class="text-2xl font-bold text-slate-800 mt-0.5">- <span class="text-xs font-normal text-slate-400">分</span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Student List Data Table -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+            <!-- Table Action Header -->
+            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
+                <div class="flex items-center space-x-3">
+                    <h2 class="text-lg font-semibold text-slate-800" id="tableTitle">A 班學生成績單</h2>
+                    <span class="bg-slate-200 text-slate-600 text-xs font-mono px-2.5 py-0.5 rounded-full">固定 26 人</span>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="exportClassCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>匯出本班 CSV</span>
+                    </button>
+
+                    <button onclick="clearCurrentClass()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/60 text-sm font-medium px-4 py-2 rounded-xl transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>清空本班</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Body -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/80 text-slate-500 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
+                            <th class="px-6 py-3.5">座號 / 學號</th>
+                            <th class="px-6 py-3.5">狀態</th>
+                            <th class="px-6 py-3.5">分數 (00~99)</th>
+                            <th class="px-6 py-3.5">登記時間</th>
+                            <th class="px-6 py-3.5 text-right">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- Dynamic 26 rows will be generated here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // System State
+        const TOTAL_STUDENTS = 26;
+        let classesData = {}; // Stores score data for each class
+        let currentClassKey = 'A班';
+
+        // Initial Load
+        window.onload = function() {
+            initStorage();
+            renderClassSelectOptions();
+            switchClass(currentClassKey);
+            
+            // Auto focus input
+            document.getElementById('quickInput').focus();
+        };
+
+        // Initialize local storage default schema
+        function initStorage() {
+            const savedData = localStorage.getItem('school_scores_v2');
+            const savedClass = localStorage.getItem('school_scores_current_class');
+
+            if (savedData) {
+                try {
+                    classesData = JSON.parse(savedData);
+                } catch (e) {
+                    classesData = {};
+                }
+            }
+
+            // Default classes if none exist
+            if (!classesData || Object.keys(classesData).length === 0) {
+                classesData = {
+                    'A班': createEmptyClassMap(),
+                    'B班': createEmptyClassMap(),
+                    'C班': createEmptyClassMap()
+                };
+                saveToStorage();
+            }
+
+            if (savedClass && classesData[savedClass]) {
+                currentClassKey = savedClass;
+            } else {
+                currentClassKey = Object.keys(classesData)[0];
+            }
+        }
+
+        // Helper to generate empty records for 26 students
+        function createEmptyClassMap() {
+            const map = {};
+            for (let i = 1; i <= TOTAL_STUDENTS; i++) {
+                const idStr = String(i).padStart(2, '0');
+                map[idStr] = null; // null means unregistered
+            }
+            return map;
+        }
+
+        // Save data to localStorage
+        function saveToStorage() {
+            localStorage.setItem('school_scores_v2', JSON.stringify(classesData));
+            localStorage.setItem('school_scores_current_class', currentClassKey);
+        }
+
+        // Render Class Dropdown
+        function renderClassSelectOptions() {
+            const select = document.getElementById('classSelect');
+            select.innerHTML = '';
+            
+            Object.keys(classesData).forEach(className => {
+                const opt = document.createElement('option');
+                opt.value = className;
+                opt.textContent = className;
+                if (className === currentClassKey) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        // Switch active class
+        function switchClass(className) {
+            currentClassKey = className;
+            localStorage.setItem('school_scores_current_class', currentClassKey);
+            
+            document.getElementById('tableTitle').textContent = `${currentClassKey} 學生成績單`;
+            renderTable();
+            updateStatistics();
+            
+            const input = document.getElementById('quickInput');
+            input.value = '';
+            updatePreview('', '');
+            input.focus();
+        }
+
+        // Add new custom class
+        function addNewClass() {
+            const name = prompt('請輸入新班級名稱（如：D班, 101班）：');
+            if (name && name.trim() !== '') {
+                const cleanName = name.trim();
+                if (classesData[cleanName]) {
+                    showAlert('該班級已存在！', 'error');
+                    return;
+                }
+                classesData[cleanName] = createEmptyClassMap();
+                saveToStorage();
+                renderClassSelectOptions();
+                switchClass(cleanName);
+                showAlert(`已新增並切換至：${cleanName}`, 'success');
+            }
+        }
+
+        // Live Input Input Handler (Auto Registers when 4 digits reached)
+        function handleQuickInput(input) {
+            // Keep digits only
+            input.value = input.value.replace(/[^0-9]/g, '');
+
+            const val = input.value;
+            const noPart = val.substring(0, 2);
+            const scorePart = val.substring(2, 4);
+
+            updatePreview(noPart, scorePart);
+
+            // Trigger registration automatically when 4 digits are entered
+            if (val.length === 4) {
+                processRegistration(noPart, scorePart);
+            }
+        }
+
+        // Realtime Preview Display
+        function updatePreview(no, score) {
+            const previewNo = document.getElementById('previewNo');
+            const previewScore = document.getElementById('previewScore');
+
+            if (no) {
+                previewNo.textContent = `學號 ${no} 號`;
+                previewNo.className = 'font-bold text-indigo-600';
+            } else {
+                previewNo.textContent = '學號 --';
+                previewNo.className = 'font-bold text-slate-400';
+            }
+
+            if (score) {
+                previewScore.textContent = `分數 ${score} 分`;
+                previewScore.className = 'font-bold text-emerald-600';
+            } else {
+                previewScore.textContent = '分數 --';
+                previewScore.className = 'font-bold text-slate-400';
+            }
+        }
+
+        // Form Submit Handler
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('quickInput');
+            const val = input.value;
+
+            if (val.length < 4) {
+                showAlert('請完整輸入 4 位數字（前2位學號 + 後2位分數）', 'error');
+                return;
+            }
+
+            const noPart = val.substring(0, 2);
+            const scorePart = val.substring(2, 4);
+            processRegistration(noPart, scorePart);
+        }
+
+        // Core Registration Logic
+        function processRegistration(studentNoStr, scoreStr) {
+            const input = document.getElementById('quickInput');
+            const studentNum = parseInt(studentNoStr, 10);
+            const scoreNum = parseInt(scoreStr, 10);
+
+            // Validate Student Number range (01 - 26)
+            if (studentNum < 1 || studentNum > TOTAL_STUDENTS) {
+                showAlert(`學號超出範圍！每班限 01 至 ${String(TOTAL_STUDENTS).padStart(2, '0')} 號`, 'error');
+                input.value = '';
+                updatePreview('', '');
+                input.focus();
+                return;
+            }
+
+            // Validate Score range (00 - 99)
+            if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > 99) {
+                showAlert('分數必須為 00 至 99 之間的 2 位數字', 'error');
+                input.value = '';
+                updatePreview('', '');
+                input.focus();
+                return;
+            }
+
+            // Save record to class map
+            const timestamp = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            classesData[currentClassKey][studentNoStr] = {
+                score: scoreNum,
+                time: timestamp
+            };
+
+            saveToStorage();
+            renderTable();
+            updateStatistics();
+
+            // Clear input for continuous fast typing
+            input.value = '';
+            updatePreview('', '');
+            input.focus();
+
+            showAlert(`成功登記：${currentClassKey} [${studentNoStr} 號] ➡️ ${String(scoreNum).padStart(2, '0')} 分`, 'success');
+        }
+
+        // Render 01~26 Student Rows in Sequential Order
+        function renderTable() {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+
+            const currentScores = classesData[currentClassKey] || {};
+
+            for (let i = 1; i <= TOTAL_STUDENTS; i++) {
+                const idStr = String(i).padStart(2, '0');
+                const record = currentScores[idStr];
+
+                const tr = document.createElement('tr');
+                tr.className = record ? 'hover:bg-indigo-50/30 transition-colors' : 'hover:bg-slate-50 opacity-75';
+
+                if (record) {
+                    // Badge Styling based on score
+                    let scoreBadgeClass = 'bg-slate-100 text-slate-700';
+                    if (record.score >= 90) scoreBadgeClass = 'bg-emerald-100 text-emerald-800 font-bold';
+                    else if (record.score >= 60) scoreBadgeClass = 'bg-blue-100 text-blue-800 font-medium';
+                    else scoreBadgeClass = 'bg-rose-100 text-rose-800 font-bold';
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-3.5 font-mono font-bold text-slate-800">
+                            <span class="bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-lg border border-indigo-200/60">${idStr} 號</span>
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <span class="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>已登記
+                            </span>
+                        </td>
+                        <td class="px-6 py-3.5 font-mono text-base">
+                            <span class="inline-block px-3 py-0.5 rounded-full ${scoreBadgeClass}">
+                                ${String(record.score).padStart(2, '0')} 分
+                            </span>
+                        </td>
+                        <td class="px-6 py-3.5 text-xs text-slate-400 font-mono">${record.time}</td>
+                        <td class="px-6 py-3.5 text-right">
+                            <button onclick="clearSingleStudent('${idStr}')" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-2 rounded-lg transition-all" title="刪除此筆分數">
+                                <i class="fa-solid fa-eraser"></i>
+                            </button>
+                        </td>
+                    `;
+                } else {
+                    // Unregistered Row
+                    tr.innerHTML = `
+                        <td class="px-6 py-3.5 font-mono text-slate-500">
+                            <span class="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg">${idStr} 號</span>
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <span class="inline-flex items-center gap-1.5 text-xs text-slate-400">
+                                <span class="w-2 h-2 rounded-full bg-slate-300"></span>未登記
+                            </span>
+                        </td>
+                        <td class="px-6 py-3.5 text-slate-300 font-mono">-- 分</td>
+                        <td class="px-6 py-3.5 text-xs text-slate-300 font-mono">--:--:--</td>
+                        <td class="px-6 py-3.5 text-right"></td>
+                    `;
+                }
+
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Update Statistics Panel
+        function updateStatistics() {
+            const currentScores = classesData[currentClassKey] || {};
+            const registered = Object.values(currentScores).filter(v => v !== null);
+
+            const count = registered.length;
+            const statCount = document.getElementById('statCount');
+            const statAvg = document.getElementById('statAvg');
+            const statMax = document.getElementById('statMax');
+            const statMin = document.getElementById('statMin');
+
+            statCount.innerHTML = `${count} / ${TOTAL_STUDENTS} <span class="text-xs font-normal text-slate-400">人</span>`;
+
+            if (count === 0) {
+                statAvg.innerHTML = `0.0 <span class="text-xs font-normal text-slate-400">分</span>`;
+                statMax.innerHTML = `- <span class="text-xs font-normal text-slate-400">分</span>`;
+                statMin.innerHTML = `- <span class="text-xs font-normal text-slate-400">分</span>`;
+                return;
+            }
+
+            const scores = registered.map(r => r.score);
+            const sum = scores.reduce((a, b) => a + b, 0);
+            const avg = (sum / count).toFixed(1);
+            const max = Math.max(...scores);
+            const min = Math.min(...scores);
+
+            statAvg.innerHTML = `${avg} <span class="text-xs font-normal text-slate-400">分</span>`;
+            statMax.innerHTML = `${String(max).padStart(2, '0')} <span class="text-xs font-normal text-slate-400">分</span>`;
+            statMin.innerHTML = `${String(min).padStart(2, '0')} <span class="text-xs font-normal text-slate-400">分</span>`;
+        }
+
+        // Clear single student's record
+        function clearSingleStudent(idStr) {
+            if (classesData[currentClassKey][idStr]) {
+                classesData[currentClassKey][idStr] = null;
+                saveToStorage();
+                renderTable();
+                updateStatistics();
+                showAlert(`已清除 ${idStr} 號學生的分數`, 'info');
+            }
+        }
+
+        // Clear Current Class Data
+        function clearCurrentClass() {
+            if (confirm(`確定要清空 [${currentClassKey}] 所有 26 位學生的分數資料嗎？`)) {
+                classesData[currentClassKey] = createEmptyClassMap();
+                saveToStorage();
+                renderTable();
+                updateStatistics();
+                showAlert(`已清空 ${currentClassKey} 的所有成績！`, 'info');
+            }
+        }
+
+        // Export Class Data as CSV
+        function exportClassCSV() {
+            const currentScores = classesData[currentClassKey] || {};
+            let csvContent = "\uFEFF座號,學號,分數,登記狀態,登記時間\n";
+
+            for (let i = 1; i <= TOTAL_STUDENTS; i++) {
+                const idStr = String(i).padStart(2, '0');
+                const rec = currentScores[idStr];
+                if (rec) {
+                    csvContent += `${i},"${idStr}號","${String(rec.score).padStart(2, '0')}","已登記","${rec.time}"\n`;
+                } else {
+                    csvContent += `${i},"${idStr}號","--","未登記","--"\n`;
+                }
+            }
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const dateStr = new Date().toISOString().slice(0,10);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${currentClassKey}_學生成績單_${dateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showAlert(`成功導出 ${currentClassKey} CSV 檔案！`, 'success');
+        }
+
+        // UI Toast Alert Helper
+        function showAlert(msg, type = 'info') {
+            const alertBox = document.getElementById('alertBox');
+            const alertMessage = document.getElementById('alertMessage');
+            const alertIcon = document.getElementById('alertIcon');
+
+            alertMessage.textContent = msg;
+            alertBox.className = 'mb-4 p-3 rounded-xl text-sm flex items-center justify-between transition-all duration-300 ';
+
+            if (type === 'error') {
+                alertBox.classList.add('bg-rose-50', 'text-rose-700', 'border', 'border-rose-200');
+                alertIcon.className = 'fa-solid fa-circle-exclamation text-rose-500';
+            } else if (type === 'success') {
+                alertBox.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+                alertIcon.className = 'fa-solid fa-circle-check text-emerald-500';
+            } else {
+                alertBox.classList.add('bg-blue-50', 'text-blue-700', 'border', 'border-blue-200');
+                alertIcon.className = 'fa-solid fa-circle-info text-blue-500';
+            }
+
+            alertBox.classList.remove('hidden');
+
+            clearTimeout(window.alertTimer);
+            window.alertTimer = setTimeout(() => {
+                hideAlert();
+            }, 3500);
+        }
+
+        function hideAlert() {
+            document.getElementById('alertBox').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
