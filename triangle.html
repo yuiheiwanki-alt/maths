@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三角形面积拼合工作台 · 互动教学</title>
+  <style>
+    :root {
+      --canvas: #FFF3D9;
+      --surface: #FFF6E3;
+      --white: #fff;
+      --ink: #78440A;
+      --muted: #936835;
+      --primary: #F8981F;
+      --deep: #D48019;
+      --blue: #A6CFEF;
+      --positive: #3B6484;
+      --border: #DFCBAF;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .app {
+      max-width: 1500px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+    }
+    .eyebrow {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--positive);
+      margin-bottom: 4px;
+    }
+    h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      line-height: 1.1;
+      margin-bottom: 6px;
+      color: #5A3000;
+    }
+    .subtitle { color: var(--muted); font-size: 16px; }
+    .progress {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 22px;
+      min-width: 200px;
+      box-shadow: 0 4px 0 rgba(120, 68, 10, 0.08);
+    }
+    .progress span { display: block; font-size: 14px; color: var(--muted); }
+    .progress b {
+      display: block;
+      font-size: 24px;
+      color: var(--positive);
+      margin: 4px 0 2px;
+    }
+    #snapText { font-size: 14px; color: var(--deep); font-weight: 600; }
+    .layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px 16px;
+      box-shadow: 0 6px 0 rgba(120, 68, 10, 0.06);
+      align-self: start;
+    }
+    .panel h2 { font-size: 18px; margin-bottom: 12px; color: var(--ink); }
+    .hint {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+    .bank { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .piece-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 0 rgba(120, 68, 10, 0.05);
+    }
+    .piece-card svg { width: 70px; height: 56px; flex-shrink: 0; overflow: visible; }
+    .piece-card strong { font-size: 16px; display: block; }
+    .piece-card small { font-size: 12px; color: var(--muted); display: block; margin: 3px 0 6px; }
+    .copy-btn {
+      background: var(--primary);
+      border: none;
+      border-radius: 40px;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #2C1A00;
+      cursor: pointer;
+      border: 1px solid var(--deep);
+      width: 100%;
+      box-shadow: 0 3px 0 var(--deep);
+      transition: 0.15s;
+    }
+    .copy-btn:hover { background: #ffa72b; transform: translateY(-1px); }
+    .copy-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--deep); }
+    .tip {
+      background: var(--white);
+      border-left: 6px solid var(--blue);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      margin-top: 16px;
+      box-shadow: 0 3px 0 rgba(120, 68, 10, 0.04);
+    }
+    .tip.success { border-left-color: var(--positive); background: #EDF6FB; }
+    .tip.warn { border-left-color: var(--primary); }
+    .work { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 12px 20px;
+      box-shadow: 0 6px 0 rgba(120, 68, 10, 0.04);
+    }
+    .toolbar .status {
+      flex: 1;
+      min-width: 160px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .toolbar button {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 9px 14px;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--ink);
+      cursor: pointer;
+      box-shadow: 0 3px 0 rgba(120, 68, 10, 0.1);
+      transition: 0.1s;
+      white-space: nowrap;
+    }
+    .toolbar button:hover { background: #FFF9EF; border-color: var(--deep); }
+    .toolbar button.primary {
+      background: var(--primary);
+      border-color: var(--deep);
+      color: #1F1300;
+      box-shadow: 0 4px 0 var(--deep);
+    }
+    .toolbar button.primary:hover { background: #ffa72b; }
+    .toolbar button.check {
+      background: var(--positive);
+      border-color: #2A4A63;
+      color: #fff;
+      box-shadow: 0 4px 0 #2A4A63;
+    }
+    .toolbar button.check:hover { background: #4A7A9E; }
+    .stage-wrap {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 18px;
+      box-shadow: 0 10px 0 rgba(120, 68, 10, 0.04);
+    }
+    .stage {
+      position: relative;
+      width: 100%;
+      height: min(66vh, 640px);
+      min-height: 440px;
+      background: #FFFDF8;
+      border-radius: 20px;
+      overflow: hidden;
+      touch-action: none;
+      background-image: radial-gradient(circle at 20% 30%, #f6ead7 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+    .stage::before {
+      content: "拼合区：把两个或多个三角形的边缘靠近";
+      position: absolute;
+      left: 24px;
+      top: 18px;
+      color: #C6A87C;
+      font-size: 13px;
+      font-weight: 500;
+      pointer-events: none;
+    }
+    .stage-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(#F0DFC8 1px, transparent 1px),
+                        linear-gradient(90deg, #F0DFC8 1px, transparent 1px);
+      background-size: 36px 36px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .piece {
+      position: absolute;
+      width: 150px;
+      height: 130px;
+      touch-action: none;
+      cursor: grab;
+      transform-origin: center;
+      filter: drop-shadow(0 8px 6px rgba(120, 68, 10, 0.12));
+      transition: filter 0.15s;
+      z-index: 10;
+    }
+    .piece.dragging {
+      cursor: grabbing;
+      filter: drop-shadow(0 14px 10px rgba(120, 68, 10, 0.22));
+      z-index: 100;
+    }
+    .piece.selected {
+      outline: 4px solid var(--primary);
+      outline-offset: 4px;
+      border-radius: 8px;
+    }
+    .piece.snap { animation: pop 0.3s ease; }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
+    .piece svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .piece .tag {
+      position: absolute;
+      left: 10px;
+      bottom: 8px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      pointer-events: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .target-board {
+      display: none;
+      position: absolute;
+      inset: 60px 10% 12%;
+      border: 3px dashed var(--positive);
+      border-radius: 28px;
+      background: rgba(166, 207, 239, 0.12);
+      pointer-events: none;
+      z-index: 5;
+    }
+    .target-board.active { display: block; }
+    .target-title {
+      position: absolute;
+      left: 24px;
+      top: 16px;
+      font-weight: 800;
+      color: var(--positive);
+      background: rgba(255, 255, 255, 0.85);
+      padding: 4px 16px;
+      border-radius: 30px;
+      font-size: 14px;
+    }
+    .target-shape {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 300px;
+      height: 150px;
+      transform: translate(-50%, -50%) skewY(-6deg);
+      border: 3px dashed rgba(59, 100, 132, 0.6);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .target-board.done .target-shape {
+      border-color: var(--positive);
+      border-style: solid;
+      background: rgba(59, 100, 132, 0.15);
+      box-shadow: 0 0 0 6px rgba(59, 100, 132, 0.1);
+    }
+    .empty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #DBC6A8;
+      font-size: 20px;
+      font-weight: 500;
+      pointer-events: none;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      font-size: 14px;
+      color: var(--muted);
+      padding-left: 8px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      display: inline-block;
+      border-radius: 4px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .bank { display: grid; grid-template-columns: repeat(2, 1fr); }
+      .header { flex-direction: column; align-items: flex-start; }
+      .stage { height: 58vh; min-height: 420px; }
+    }
+    @media (max-width: 560px) {
+      body { padding: 12px; }
+      .bank { grid-template-columns: 1fr; }
+      .toolbar button { padding: 8px 10px; font-size: 12px; flex: 1; }
+      .piece { width: 120px; height: 104px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div>
+      <div class="eyebrow">小學數學 · 三角形面積</div>
+      <h1>三角形面積拼合工作台</h1>
+      <p class="subtitle">複製紙片、旋轉方向、拖動位置，按「檢查拼合」看看能否精確拼合。</p>
+    </div>
+    <div class="progress">
+      <span>目前工作台</span>
+      <b id="countText">0 塊三角形</b>
+      <span id="snapText">尚未發現拼合</span>
+    </div>
+  </header>
+  <main class="layout">
+    <aside class="panel">
+      <h2>選擇三角形紙片</h2>
+      <p class="hint">按「複製一塊」加入工作台。每種紙片都對應一個題型。</p>
+      <div class="bank" id="bank"></div>
+      <div class="tip" id="tip">三角形面積公式：底 × 高 ÷ 2。拼合時可觀察底和高的方向如何改變。</div>
+    </aside>
+    <section class="work">
+      <div class="toolbar">
+        <div class="status" id="status">請從左側複製一塊三角形開始。</div>
+        <button id="challengeBtn" type="button">📐 平行四邊形挑戰</button>
+        <button id="leftBtn" type="button">↺ 左轉 15°</button>
+        <button id="rightBtn" type="button">↻ 右轉 15°</button>
+        <button id="flipBtn" type="button">⟳ 翻轉 180°</button>
+        <button id="deleteBtn" type="button">🗑 刪除</button>
+        <button id="checkBtn" class="check" type="button">✅ 檢查拼合</button>
+        <button id="resetBtn" class="primary" type="button">⟲ 重置</button>
+      </div>
+      <div class="stage-wrap">
+        <div class="stage" id="drag-stage">
+          <div class="stage-grid"></div>
+          <div class="target-board" id="targetBoard" aria-hidden="true">
+            <div class="target-title">平行四邊形目標</div>
+            <div class="target-shape"></div>
+          </div>
+          <div class="empty" id="empty">工作台是空的</div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:#F8981F;"></i>直角／一般三角形</span>
+        <span><i class="dot" style="background:#A6CFEF;"></i>不同尺寸紙片</span>
+        <span><i class="dot" style="background:#3B6484;"></i>拼合成功提示</span>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function() {
+  // ---------- 三角形定义 ----------
+  const defs = [
+    { id: 'a', name: 'A 型', measure: '底 14 m · 高 9 m', color: '#F8981F',
+      points: '18,112 18,18 136,65' },
+    { id: 'b', name: 'B 型', measure: '底 11 cm · 高 12 cm', color: '#A6CFEF',
+      points: '18,112 82,18 136,18' },
+    { id: 'c', name: 'C 型', measure: '15 m · 8 m · 17 m', color: '#F5B66B',
+      points: '18,112 120,18 148,112' },
+    { id: 'd', name: 'D 型', measure: '底 16 m · 高 13 m', color: '#8BB9D7',
+      points: '18,112 130,30 148,112' },
+    { id: 'e', name: 'E 型', measure: '底 15 cm · 高 12 cm', color: '#D98E7E',
+      points: '18,36 136,66 50,112' }
+  ];
+
+  const stage = document.getElementById('drag-stage');
+  const bank = document.getElementById('bank');
+  const empty = document.getElementById('empty');
+  const status = document.getElementById('status');
+  const tip = document.getElementById('tip');
+  const countText = document.getElementById('countText');
+  const snapText = document.getElementById('snapText');
+  const targetBoard = document.getElementById('targetBoard');
+
+  let activeEl = null, activePid = null, offsetX = 0, offsetY = 0;
+  let selected = null;
+  let seq = 0;
+  let pieces = [];
+  let challengeMode = false;
+
+  // ---------- 工具函数 ----------
+  function miniSvg(d) {
+    return `<svg viewBox="0 0 166 130" aria-label="${d.name}">
+      <polygon points="${d.points}" fill="${d.color}" stroke="#78440A" stroke-width="3" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  defs.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'piece-card';
+    card.innerHTML = `
+      <div>${miniSvg(d)}</div>
+      <div style="flex:1">
+        <strong>${d.name}</strong>
+        <small>${d.measure}</small>
+        <button class="copy-btn" data-copy="${d.id}">複製一塊</button>
+      </div>
+    `;
+    bank.appendChild(card);
+  });
+
+  // ---------- 创建纸片 ----------
+  function makePiece(d, x, y) {
+    seq++;
+    const el = document.createElement('div');
+    el.className = 'piece';
+    el.dataset.drag = '';
+    el.dataset.id = 'p' + seq;
+    el.dataset.def = d.id;
+    el.dataset.rot = '0';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.transform = 'rotate(0deg)';
+    el.innerHTML = miniSvg(d) + `<span class="tag">${d.name}</span>`;
+    stage.appendChild(el);
+    pieces.push(el);
+    select(el);
+    update();
+    return el;
+  }
+
+  function select(el) {
+    if (selected) selected.classList.remove('selected');
+    selected = el;
+    if (el) el.classList.add('selected');
+  }
+
+  function update() {
+    const live = pieces.filter(p => p.isConnected);
+    pieces = live;
+    empty.style.display = live.length ? 'none' : 'grid';
+    countText.textContent = live.length + ' 塊三角形';
+    if (!live.length) {
+      snapText.textContent = '尚未發現拼合';
+      status.textContent = '請從左側複製一塊三角形開始。';
+    } else if (selected) {
+      const d = defs.find(x => x.id === selected.dataset.def);
+      if (d) status.textContent = `已選取 ${d.name}：可拖動、旋轉或翻轉。`;
+    }
+  }
+
+  function clamp(el, x, y) {
+    const maxX = Math.max(0, stage.clientWidth - el.offsetWidth);
+    const maxY = Math.max(0, stage.clientHeight - el.offsetHeight);
+    return {
+      x: Math.max(0, Math.min(maxX, x)),
+      y: Math.max(0, Math.min(maxY, y))
+    };
+  }
+
+  // ---------- 获取变换后的顶点坐标（相对 stage 左上角）----------
+  function getTransformedVertices(el) {
+    const d = defs.find(x => x.id === el.dataset.def);
+    if (!d) return [];
+    const pts = d.points.split(' ').map(p => p.split(',').map(Number));
+    const sx = el.offsetWidth / 166;
+    const sy = el.offsetHeight / 130;
+    const cx = el.offsetLeft + el.offsetWidth / 2;
+    const cy = el.offsetTop + el.offsetHeight / 2;
+    const rad = (Number(el.dataset.rot) || 0) * Math.PI / 180;
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    return pts.map(([x, y]) => {
+      const lx = x * sx - el.offsetWidth / 2;
+      const ly = y * sy - el.offsetHeight / 2;
+      return {
+        x: cx + lx * cos - ly * sin,
+        y: cy + lx * sin + ly * cos
+      };
+    });
+  }
+
+  // ---------- 精确边吸附 ----------
+  const TOL = 4;
+
+  function findExactEdgeSnap(el, other) {
+    const a = getTransformedVertices(el);
+    const b = getTransformedVertices(other);
+    if (a.length < 3 || b.length < 3) return null;
+
+    for (let i = 0; i < a.length; i++) {
+      const a1 = a[i], a2 = a[(i + 1) % a.length];
+      const aLen = Math.hypot(a2.x - a1.x, a2.y - a1.y);
+
+      for (let j = 0; j < b.length; j++) {
+        const b1 = b[j], b2 = b[(j + 1) % b.length];
+        const bLen = Math.hypot(b2.x - b1.x, b2.y - b1.y);
+        if (Math.abs(aLen - bLen) > TOL) continue;
+
+        const aAng = Math.atan2(a2.y - a1.y, a2.x - a1.x);
+        const bAng = Math.atan2(b2.y - b1.y, b2.x - b1.x);
+        let dAng = Math.abs(aAng - bAng) % Math.PI;
+        if (dAng > Math.PI / 2) dAng = Math.PI - dAng;
+        if (dAng > 0.12) continue;
+
+        const cases = [
+          { from: a1, to: b1, from2: a2, to2: b2 },
+          { from: a1, to: b2, from2: a2, to2: b1 }
+        ];
+
+        for (const c of cases) {
+          const dx = c.to.x - c.from.x;
+          const dy = c.to.y - c.from.y;
+          const err2 = Math.hypot(
+            c.to2.x - (c.from2.x + dx),
+            c.to2.y - (c.from2.y + dy)
+          );
+          if (err2 < TOL) {
+            return { dx, dy, edgeIndex: i, otherEdge: j };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  // ---------- 校验是否共享完整边 ----------
+  function hasSharedEdge(el, other) {
+    const a = getTransformedVertices(el);
+    const b = getTransformedVertices(other);
+    if (a.length < 3 || b.length < 3) return false;
+
+    for (let i = 0; i < a.length; i++) {
+      const a1 = a[i], a2 = a[(i + 1) % a.length];
+      for (let j = 0; j < b.length; j++) {
+        const b1 = b[j], b2 = b[(j + 1) % b.length];
+        const m1 = Math.hypot(a1.x - b1.x, a1.y - b1.y) < TOL &&
+                   Math.hypot(a2.x - b2.x, a2.y - b2.y) < TOL;
+        const m2 = Math.hypot(a1.x - b2.x, a1.y - b2.y) < TOL &&
+                   Math.hypot(a2.x - b1.x, a2.y - b1.y) < TOL;
+        if (m1 || m2) return true;
+      }
+    }
+    return false;
+  }
+
+  // ---------- 用户点击「檢查拼合」时执行的检测 ----------
+  function checkAllSnap() {
+    const live = pieces.filter(p => p.isConnected);
+
+    // 1. 挑战模式：两个相同三角形
+    if (challengeMode) {
+      if (tryParallelogramSnap(live)) return;
+    }
+
+    // 2. 自由模式：检查是否有任意两块能精确共享一条边
+    // 找距离最近的一对
+    let bestPair = null, bestDist = Infinity;
+    for (let i = 0; i < live.length; i++) {
+      for (let j = i + 1; j < live.length; j++) {
+        const a = live[i], b = live[j];
+        const ar = a.getBoundingClientRect();
+        const br = b.getBoundingClientRect();
+        const dx = (ar.left + ar.width / 2) - (br.left + br.width / 2);
+        const dy = (ar.top + ar.height / 2) - (br.top + br.height / 2);
+        const d = Math.hypot(dx, dy);
+        if (d < bestDist) { bestDist = d; bestPair = [a, b]; }
+      }
+    }
+
+    if (!bestPair) {
+      snapText.textContent = '尚未發現拼合';
+      tip.className = 'tip';
+      tip.textContent = '請先複製至少兩塊三角形。';
+      return;
+    }
+
+    if (bestDist > 260) {
+      snapText.textContent = '尚未發現拼合';
+      tip.className = 'tip warn';
+      tip.textContent = '兩塊三角形離得太遠，請把它們拖近一點再檢查。';
+      return;
+    }
+
+    const [el, other] = bestPair;
+    // 尝试精确吸附
+    let snap = findExactEdgeSnap(el, other);
+    let target = el, from = other;
+    if (!snap) {
+      snap = findExactEdgeSnap(other, el);
+      target = other; from = el;
+    }
+
+    if (snap) {
+      // 执行精确吸附
+      const p = clamp(target, target.offsetLeft + snap.dx, target.offsetTop + snap.dy);
+      target.style.left = p.x + 'px';
+      target.style.top = p.y + 'px';
+
+      requestAnimationFrame(() => {
+        if (hasSharedEdge(target, from)) {
+          target.classList.add('snap');
+          from.classList.add('snap');
+          setTimeout(() => {
+            target.classList.remove('snap');
+            from.classList.remove('snap');
+          }, 320);
+          snapText.textContent = '✅ 完全拼合成功';
+          tip.className = 'tip success';
+          tip.textContent = '兩塊三角形的邊已精確重合，拼合成功！';
+          status.textContent = '拼合成功：兩塊三角形共享一條完整邊。';
+        } else {
+          snapText.textContent = '尚未發現拼合';
+          tip.className = 'tip';
+          tip.textContent = '兩塊三角形還未完全對齊，請再調整旋轉角度或位置。';
+        }
+      });
+    } else {
+      snapText.textContent = '尚未發現拼合';
+      tip.className = 'tip';
+      tip.textContent = '找不到可重合的邊。請旋轉三角形，讓兩條邊長度相等且方向平行。';
+    }
+  }
+
+  // ---------- 平行四边形挑战（仅在点击「檢查拼合」时执行）----------
+  function tryParallelogramSnap(live) {
+    if (live.length !== 2) {
+      snapText.textContent = '尚未發現拼合';
+      tip.className = 'tip warn';
+      tip.textContent = '挑戰模式需要恰好兩塊三角形。';
+      return false;
+    }
+    if (live[0].dataset.def !== live[1].dataset.def) {
+      snapText.textContent = '尚未發現拼合';
+      tip.className = 'tip warn';
+      tip.textContent = '挑戰模式需要兩塊「相同類型」的三角形。';
+      return false;
+    }
+
+    const a = live[0], b = live[1];
+    const rotA = Number(a.dataset.rot) || 0;
+    const rotB = Number(b.dataset.rot) || 0;
+    const angleGap = Math.abs(Math.abs(rotA - rotB) - 180);
+    if (angleGap > 30) {
+      snapText.textContent = '尚未發現拼合';
+      tip.className = 'tip warn';
+      tip.textContent = `兩塊三角形旋轉差為 ${Math.round(Math.abs(rotA - rotB))}°，請把其中一塊翻轉 180°（相差接近 180°）。`;
+      return false;
+    }
+
+    // 中心距离
+    const ar = a.getBoundingClientRect();
+    const br = b.getBoundingClientRect();
+    const cx = ar.left + ar.width / 2, cy = ar.top + ar.height / 2;
+    const bx = br.left + br.width / 2, by = br.top + br.height / 2;
+    const dist = Math.hypot(cx - bx, cy - by);
+    if (dist > 320) {
+      snapText.textContent = '尚未發現拼合';
+      tip.className = 'tip warn';
+      tip.textContent = '兩塊三角形離得太遠，請把它們拖到目標框附近再檢查。';
+      return false;
+    }
+
+    // 精确吸附
+    let snap = findExactEdgeSnap(a, b);
+    let target = a, from = b;
+    if (!snap) {
+      snap = findExactEdgeSnap(b, a);
+      target = b; from = a;
+    }
+    if (!snap) {
+      snapText.textContent = '尚未發現拼合';
+      tip.className = 'tip';
+      tip.textContent = '還找不到可精確重合的邊，請微調位置後再檢查。';
+      return false;
+    }
+
+    const p = clamp(target, target.offsetLeft + snap.dx, target.offsetTop + snap.dy);
+    target.style.left = p.x + 'px';
+    target.style.top = p.y + 'px';
+
+    requestAnimationFrame(() => {
+      if (hasSharedEdge(target, from)) {
+        target.classList.add('snap');
+        from.classList.add('snap');
+        setTimeout(() => {
+          target.classList.remove('snap');
+          from.classList.remove('snap');
+        }, 320);
+        targetBoard.classList.add('done');
+        snapText.textContent = '🎉 平行四邊形完成';
+        status.textContent = '完成！兩塊全等三角形已拼成平行四邊形。';
+        tip.className = 'tip success';
+        tip.textContent = '拼合成功：兩個全等三角形可以拼成一個平行四邊形，面積等於兩個三角形面積的總和。';
+      } else {
+        snapText.textContent = '尚未發現拼合';
+        tip.className = 'tip';
+        tip.textContent = '還差一點點，請微調位置或旋轉角度後再檢查。';
+      }
+    });
+    return true;
+  }
+
+  // ---------- 拖拽逻辑（松手后保持原位，不做自动吸附）----------
+  function forceReset() {
+    if (!activeEl) return;
+    activeEl.classList.remove('dragging');
+    try { if (activePid !== null) activeEl.releasePointerCapture(activePid); } catch (e) {}
+    activeEl = null;
+    activePid = null;
+  }
+
+  stage.addEventListener('pointerdown', e => {
+    if (activeEl) forceReset();
+    const el = e.target.closest('[data-drag]');
+    if (!el) return;
+    select(el);
+    activeEl = el;
+    activePid = e.pointerId;
+    const r = el.getBoundingClientRect();
+    offsetX = e.clientX - r.left;
+    offsetY = e.clientY - r.top;
+    el.classList.add('dragging');
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+
+  stage.addEventListener('pointermove', e => {
+    if (!activeEl || e.pointerId !== activePid) return;
+    const sr = stage.getBoundingClientRect();
+    const p = clamp(activeEl, e.clientX - sr.left - offsetX, e.clientY - sr.top - offsetY);
+    activeEl.style.left = p.x + 'px';
+    activeEl.style.top = p.y + 'px';
+  });
+
+  function endDrag(e) {
+    if (!activeEl || e.pointerId !== activePid) return;
+    const el = activeEl;
+    el.classList.remove('dragging');
+    try { el.releasePointerCapture(e.pointerId); } catch (err) {}
+    activeEl = null;
+    activePid = null;
+    // 松手后不做任何吸附，只更新界面
+    update();
+    // 提示用户可点击「檢查拼合」
+    if (pieces.filter(p => p.isConnected).length >= 2) {
+      status.textContent = '已放置紙片。可點「✅ 檢查拼合」看看能否拼合。';
+    }
+  }
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
+
+  // 复制按钮
+  bank.addEventListener('click', e => {
+    const b = e.target.closest('[data-copy]');
+    if (!b) return;
+    const d = defs.find(x => x.id === b.dataset.copy);
+    if (!d) return;
+    const n = pieces.length;
+    const x = 30 + (n % 4) * 155;
+    const y = 60 + Math.floor(n / 4) * 140;
+    makePiece(d, x, y);
+    tip.className = 'tip';
+    tip.textContent = `已複製 ${d.name}。拖動紙片靠近另一塊，然後按「✅ 檢查拼合」。`;
+  });
+
+  // 旋转
+  function rotate(delta) {
+    if (!selected) {
+      status.textContent = '請先點選工作台上的三角形。';
+      return;
+    }
+    const r = (Number(selected.dataset.rot) || 0) + delta;
+    selected.dataset.rot = String(r);
+    selected.style.transform = `rotate(${r}deg)`;
+    status.textContent = `已旋轉 ${delta > 0 ? '右' : '左'} 15°。`;
+  }
+
+  function flip180() {
+    if (!selected) {
+      status.textContent = '請先點選工作台上的三角形。';
+      return;
+    }
+    const r = (Number(selected.dataset.rot) || 0) + 180;
+    selected.dataset.rot = String(r);
+    selected.style.transform = `rotate(${r}deg)`;
+    status.textContent = '已翻轉 180°。';
+  }
+
+  document.getElementById('challengeBtn').onclick = () => {
+    challengeMode = !challengeMode;
+    targetBoard.classList.toggle('active', challengeMode);
+    targetBoard.classList.remove('done');
+    if (challengeMode) {
+      status.textContent = '挑戰開始：複製兩塊相同三角形，將其中一塊翻轉 180°，拖到目標框後按「檢查拼合」。';
+      tip.className = 'tip';
+      tip.textContent = '目標：兩塊相同三角形首尾相接，拼成一個平行四邊形。';
+    } else {
+      status.textContent = '已退出平行四邊形挑戰，可繼續自由拼合。';
+      tip.className = 'tip';
+      tip.textContent = '三角形面積公式：底 × 高 ÷ 2。拼合時可觀察底和高的方向如何改變。';
+    }
+  };
+
+  document.getElementById('leftBtn').onclick = () => rotate(-15);
+  document.getElementById('rightBtn').onclick = () => rotate(15);
+  document.getElementById('flipBtn').onclick = flip180;
+
+  document.getElementById('deleteBtn').onclick = () => {
+    if (!selected) return;
+    const gone = selected;
+    selected = null;
+    gone.remove();
+    update();
+    tip.className = 'tip warn';
+    tip.textContent = '已刪除選取的三角形紙片。';
+  };
+
+  document.getElementById('checkBtn').onclick = () => {
+    checkAllSnap();
+  };
+
+  document.getElementById('resetBtn').onclick = () => {
+    forceReset();
+    pieces.forEach(p => p.remove());
+    pieces = [];
+    selected = null;
+    targetBoard.classList.remove('done');
+    update();
+    tip.className = 'tip';
+    tip.textContent = challengeMode
+      ? '目標：兩塊相同三角形首尾相接，拼成一個平行四邊形。'
+      : '三角形面積公式：底 × 高 ÷ 2。拼合時可觀察底和高的方向如何改變。';
+  };
+
+  update();
+  window.__interactionState = {
+    pieces: () => pieces.length,
+    selected: () => selected && selected.dataset.def,
+    snap: () => snapText.textContent
+  };
+})();
+</script>
+</body>
+</html>
