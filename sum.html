@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>十格框加法 · 數粒拖拖樂</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(145deg, #fef6e4 0%, #ffe9d6 100%);
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', '微軟正黑體', cursive, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .game-wrapper {
+      background: #fffaf0;
+      border-radius: 60px 60px 48px 48px;
+      box-shadow: 0 18px 28px rgba(255, 170, 120, 0.18), 0 8px 12px rgba(255, 150, 100, 0.08), inset 0 2px 6px #fffdf8;
+      padding: 32px 28px 40px;
+      max-width: 960px;
+      width: 100%;
+      border: 4px solid #ffd5b5;
+      position: relative;
+    }
+    .game-wrapper::before {
+      content: '🐻';
+      position: absolute;
+      top: -18px;
+      left: 30px;
+      font-size: 2.2rem;
+      transform: rotate(-8deg);
+    }
+    .game-wrapper::after {
+      content: '🌸';
+      position: absolute;
+      top: -14px;
+      right: 40px;
+      font-size: 2rem;
+      transform: rotate(12deg);
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.4rem;
+      margin: 0 0 8px 0;
+      color: #c96f4a;
+      text-shadow: 2px 2px 0 #ffe0cc, 4px 4px 0 rgba(255, 200, 160, 0.4);
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+    .sub-head {
+      text-align: center;
+      font-size: 1.15rem;
+      color: #b48b6f;
+      margin: -6px 0 24px;
+      font-style: italic;
+    }
+    .question-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .equation {
+      font-size: 3.6rem;
+      font-weight: 800;
+      color: #6b4a36;
+      background: #fff3e6;
+      padding: 8px 48px;
+      border-radius: 120px;
+      box-shadow: inset 0 -6px 0 #ffd9be, 0 8px 0 #f5c6a0, 0 12px 18px rgba(255, 180, 140, 0.2);
+      letter-spacing: 8px;
+      border: 3px solid #ffe3cf;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+      white-space: nowrap;
+    }
+    .answer-input-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #fff3e6;
+      padding: 10px 28px;
+      border-radius: 100px;
+      box-shadow: inset 0 -4px 0 #ffd9be, 0 6px 0 #f5c6a0, 0 8px 14px rgba(255, 180, 140, 0.15);
+      border: 3px solid #ffe3cf;
+    }
+    .answer-input-area label {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: #a06e4a;
+      letter-spacing: 1px;
+    }
+    .answer-input-area input {
+      width: 110px;
+      font-size: 2rem;
+      font-weight: bold;
+      text-align: center;
+      color: #6b4a36;
+      background: #fffdf9;
+      border: 3px solid #ffd3b8;
+      border-radius: 50px;
+      padding: 6px 0;
+      outline: none;
+      box-shadow: inset 0 2px 6px rgba(255, 180, 140, 0.15);
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .answer-input-area input:focus {
+      border-color: #ffb882;
+      box-shadow: inset 0 2px 6px rgba(255, 180, 140, 0.2), 0 0 0 4px rgba(255, 184, 130, 0.25);
+    }
+    .answer-input-area input::placeholder {
+      color: #e0c4aa;
+      font-size: 1.4rem;
+    }
+    .frame-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px 30px;
+      margin: 20px 0 30px;
+    }
+    .frame-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .frame-label {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #a06e4a;
+      background: #ffe8d6;
+      padding: 6px 26px;
+      border-radius: 40px;
+      box-shadow: inset 0 -3px 0 #e6c8b0, 0 4px 0 #d9b89c;
+      border: 2px solid #fff3e9;
+      letter-spacing: 1px;
+    }
+    .ten-frame {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 10px;
+      background: #ffdcc4;
+      padding: 16px;
+      border-radius: 32px;
+      box-shadow: inset 0 0 0 4px #ffc9a8, 0 12px 18px rgba(255, 160, 120, 0.18);
+      width: 100%;
+      min-width: 240px;
+      border: 3px solid #fff0e0;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: #fffdf9;
+      border-radius: 18px;
+      box-shadow: inset 0 0 0 2px #ffd3b8, 0 4px 0 #e6b898;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.1s, box-shadow 0.1s;
+      position: relative;
+    }
+    .cell.drop-hover {
+      background: #fff0d6;
+      box-shadow: inset 0 0 0 4px #ffb882, 0 4px 0 #e6b898;
+    }
+    .dot {
+      width: 48px;
+      height: 48px;
+      background: radial-gradient(circle at 35% 35%, #ffb56b, #ff8a4c);
+      border-radius: 50%;
+      box-shadow: 0 4px 0 #d96d2e, 0 6px 10px rgba(220, 120, 60, 0.25);
+      transition: transform 0.1s, box-shadow 0.1s;
+      cursor: grab;
+      border: 3px solid #ffd7b0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .dot:active {
+      cursor: grabbing;
+    }
+    .dot.dragging {
+      opacity: 0.7;
+      transform: scale(0.92);
+      box-shadow: 0 2px 0 #d96d2e, 0 8px 12px rgba(220, 120, 60, 0.3);
+    }
+    .dot.placed {
+      background: radial-gradient(circle at 35% 35%, #ffc491, #ff9e5e);
+      box-shadow: 0 4px 0 #d96d2e, 0 6px 10px rgba(220, 120, 60, 0.2);
+      border-color: #ffe8ce;
+    }
+    .dot.placed:active {
+      cursor: grabbing;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 24px;
+      align-items: center;
+    }
+    button {
+      background: #ffcf9e;
+      border: none;
+      border-radius: 60px;
+      padding: 14px 32px;
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #5d3a24;
+      box-shadow: 0 6px 0 #d9a06e, 0 6px 12px rgba(255, 160, 100, 0.2);
+      transition: all 0.08s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: inherit;
+      border: 3px solid #ffe9d4;
+      letter-spacing: 0.5px;
+    }
+    button:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #d9a06e, 0 6px 12px rgba(255, 160, 100, 0.2);
+    }
+    button:disabled {
+      opacity: 0.5;
+      transform: translateY(2px);
+      box-shadow: 0 3px 0 #d9a06e;
+      pointer-events: none;
+    }
+    .feedback {
+      font-size: 1.7rem;
+      font-weight: bold;
+      min-height: 3rem;
+      text-align: center;
+      color: #7cb87a;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 0 #fff8e7;
+    }
+    .feedback.wrong {
+      color: #e07a5f;
+    }
+    .feedback.success {
+      color: #5a9e5a;
+      animation: bounce 0.5s ease;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    .footer-note {
+      text-align: center;
+      margin-top: 16px;
+      color: #c4a188;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 700px) {
+      .equation { font-size: 2.4rem; padding: 8px 24px; letter-spacing: 4px; }
+      .cell { width: 44px; height: 44px; border-radius: 14px; }
+      .dot { width: 34px; height: 34px; border-width: 2px; }
+      .ten-frame { min-width: 180px; gap: 6px; padding: 12px; border-radius: 24px; }
+      h1 { font-size: 1.8rem; }
+      .game-wrapper { padding: 24px 16px 30px; }
+      .answer-input-area { padding: 6px 16px; gap: 8px; }
+      .answer-input-area label { font-size: 1.2rem; }
+      .answer-input-area input { width: 80px; font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="game-wrapper">
+  <h1>🧸 十格框加法</h1>
+  <div class="sub-head">圓點已經排好囉！可以移動圓點，也可以直接輸入答案</div>
+
+  <!-- 題目區域 + 答案輸入 -->
+  <div class="question-area">
+    <div class="equation" id="equationDisplay">7 + 6</div>
+    <div class="answer-input-area">
+      <label>=</label>
+      <input type="number" id="answerInput" placeholder="?" min="0" max="99" inputmode="numeric">
+    </div>
+  </div>
+
+  <!-- 兩個十格框 -->
+  <div class="frame-container">
+    <div class="frame-box">
+      <div class="frame-label">🌸 第一個數</div>
+      <div class="ten-frame" id="frame1" data-frame="1">
+        <!-- 10 個格子由 js 生成 -->
+      </div>
+    </div>
+    <div class="frame-box">
+      <div class="frame-label">🍀 第二個數</div>
+      <div class="ten-frame" id="frame2" data-frame="2">
+        <!-- 10 個格子由 js 生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 反饋與控制 -->
+  <div class="feedback" id="feedback"></div>
+  <div class="controls">
+    <button id="checkBtn">✅ 檢查答案</button>
+    <button id="resetBtn">🔄 重新開始</button>
+    <button id="newQuestionBtn">🎲 換一題</button>
+  </div>
+  <div class="footer-note">💡 拖曳圓點：可以在兩個十格框之間移動</div>
+</div>
+
+<script>
+  (function() {
+    // ----- 遊戲狀態 -----
+    let currentA = 7;
+    let currentB = 6;
+    const totalAnswer = () => currentA + currentB;
+
+    let frame1State = new Array(10).fill(0);
+    let frame2State = new Array(10).fill(0);
+
+    // 自動換題計時器
+    let autoNextTimer = null;
+
+    // DOM 元素
+    const equationDisplay = document.getElementById('equationDisplay');
+    const answerInput = document.getElementById('answerInput');
+    const frame1El = document.getElementById('frame1');
+    const frame2El = document.getElementById('frame2');
+    const feedbackEl = document.getElementById('feedback');
+    const checkBtn = document.getElementById('checkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const newQuestionBtn = document.getElementById('newQuestionBtn');
+
+    // 拖曳狀態
+    let draggedDot = null;
+    let draggedFrom = null;
+
+    // ----- 初始化十格框格子 -----
+    function buildFrames() {
+      [frame1El, frame2El].forEach((frame, idx) => {
+        frame.innerHTML = '';
+        for (let i = 0; i < 10; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.frame = idx + 1;
+          cell.dataset.index = i;
+          cell.addEventListener('dragover', handleDragOver);
+          cell.addEventListener('dragleave', handleDragLeave);
+          cell.addEventListener('drop', handleDrop);
+          frame.appendChild(cell);
+        }
+      });
+    }
+
+    // ----- 根據狀態渲染所有圓點 -----
+    function render() {
+      document.querySelectorAll('.dot').forEach(dot => dot.remove());
+
+      const cells1 = frame1El.querySelectorAll('.cell');
+      frame1State.forEach((filled, idx) => {
+        if (filled) {
+          const dot = createDotElement('frame', 1, idx);
+          cells1[idx].appendChild(dot);
+        }
+      });
+
+      const cells2 = frame2El.querySelectorAll('.cell');
+      frame2State.forEach((filled, idx) => {
+        if (filled) {
+          const dot = createDotElement('frame', 2, idx);
+          cells2[idx].appendChild(dot);
+        }
+      });
+
+      equationDisplay.textContent = `${currentA} + ${currentB}`;
+    }
+
+    // 建立一個圓點 DOM
+    function createDotElement(sourceType, frameId, index) {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (sourceType === 'frame' ? ' placed' : '');
+      dot.draggable = true;
+      dot.setAttribute('aria-label', '數粒');
+
+      dot.dataset.sourceType = sourceType;
+      if (sourceType === 'frame') {
+        dot.dataset.frameId = frameId;
+        dot.dataset.index = index;
+      }
+
+      dot.addEventListener('dragstart', handleDragStart);
+      dot.addEventListener('dragend', handleDragEnd);
+      dot.addEventListener('drag', (e) => e.preventDefault());
+      return dot;
+    }
+
+    // ----- 拖曳事件處理 -----
+    function handleDragStart(e) {
+      const dot = e.target;
+      if (!dot.classList.contains('dot')) return;
+
+      draggedDot = dot;
+      const sourceType = dot.dataset.sourceType;
+      const frameId = dot.dataset.frameId ? parseInt(dot.dataset.frameId) : null;
+      const index = dot.dataset.index !== undefined ? parseInt(dot.dataset.index) : null;
+
+      draggedFrom = { type: sourceType, frameId, index };
+
+      e.dataTransfer.setData('text/plain', 'dot');
+      e.dataTransfer.effectAllowed = 'move';
+
+      setTimeout(() => dot.classList.add('dragging'), 0);
+    }
+
+    function handleDragEnd(e) {
+      const dot = e.target;
+      dot.classList.remove('dragging');
+      document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('drop-hover'));
+      draggedDot = null;
+      draggedFrom = null;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const cell = e.currentTarget;
+      if (cell.classList.contains('cell')) {
+        cell.classList.add('drop-hover');
+      }
+    }
+
+    function handleDragLeave(e) {
+      const cell = e.currentTarget;
+      cell.classList.remove('drop-hover');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const cell = e.currentTarget;
+      cell.classList.remove('drop-hover');
+
+      if (!draggedDot || !draggedFrom) return;
+
+      const targetFrame = parseInt(cell.dataset.frame);
+      const targetIndex = parseInt(cell.dataset.index);
+
+      let targetArray = targetFrame === 1 ? frame1State : frame2State;
+      if (targetArray[targetIndex] === 1) return;
+
+      const source = draggedFrom;
+
+      if (source.type === 'frame') {
+        const srcFrame = source.frameId;
+        const srcIdx = source.index;
+        const srcArray = srcFrame === 1 ? frame1State : frame2State;
+        if (srcArray[srcIdx] === 0) return;
+        srcArray[srcIdx] = 0;
+      }
+
+      targetArray[targetIndex] = 1;
+
+      render();
+      clearFeedback();
+
+      draggedDot = null;
+      draggedFrom = null;
+    }
+
+    // 清除反饋與自動換題計時器
+    function clearFeedback() {
+      feedbackEl.textContent = '';
+      feedbackEl.classList.remove('wrong', 'success');
+      if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+      }
+    }
+
+    // ----- 重置到當前題目的初始狀態 -----
+    function resetToCurrent() {
+      clearFeedback();
+
+      frame1State = new Array(10).fill(0);
+      frame2State = new Array(10).fill(0);
+
+      for (let i = 0; i < currentA && i < 10; i++) {
+        frame1State[i] = 1;
+      }
+      for (let i = 0; i < currentB && i < 10; i++) {
+        frame2State[i] = 1;
+      }
+
+      answerInput.value = '';
+
+      render();
+      document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('drop-hover'));
+    }
+
+    // ----- 檢查答案 -----
+    function checkAnswer() {
+      if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+      }
+
+      const expected = totalAnswer();
+      const inputVal = answerInput.value.trim();
+      const inputNum = parseInt(inputVal, 10);
+
+      const count1 = frame1State.reduce((a, b) => a + b, 0);
+      const count2 = frame2State.reduce((a, b) => a + b, 0);
+      const totalInFrames = count1 + count2;
+
+      const inputCorrect = !isNaN(inputNum) && inputNum === expected;
+      const dotsCorrect = totalInFrames === expected;
+
+      if (inputCorrect && dotsCorrect) {
+        feedbackEl.textContent = `✅ 太棒了！${currentA} + ${currentB} = ${expected}，下一題來囉～`;
+        feedbackEl.classList.remove('wrong');
+        feedbackEl.classList.add('success');
+
+        autoNextTimer = setTimeout(() => {
+          generateNewQuestion();
+        }, 1500);
+      } else if (!inputCorrect && isNaN(inputNum)) {
+        if (dotsCorrect) {
+          feedbackEl.textContent = `👌 圓點排對了！不過還沒輸入答案喔，請在「=」後面填入 ${expected}`;
+        } else {
+          feedbackEl.textContent = `❌ 再試試看，框裡現在有 ${totalInFrames} 個圓點，目標是 ${expected}`;
+        }
+        feedbackEl.classList.add('wrong');
+        feedbackEl.classList.remove('success');
+      } else if (!inputCorrect) {
+        feedbackEl.textContent = `❌ 答案不對喔，再算算看！`;
+        feedbackEl.classList.add('wrong');
+        feedbackEl.classList.remove('success');
+      } else if (!dotsCorrect) {
+        feedbackEl.textContent = `答案對了！不過框裡的圓點有 ${totalInFrames} 個，和答案 ${expected} 不一樣，再調整一下圓點吧！`;
+        feedbackEl.classList.add('wrong');
+        feedbackEl.classList.remove('success');
+      }
+    }
+
+    // ----- 生成新題目 (每個數字 2-9，答案 4-18) -----
+    function generateNewQuestion() {
+      let a, b;
+      do {
+        a = Math.floor(Math.random() * 8) + 2; // 2 到 9
+        b = Math.floor(Math.random() * 8) + 2; // 2 到 9
+      } while (a + b < 4 || a + b > 18);
+      currentA = a;
+      currentB = b;
+      resetToCurrent();
+    }
+
+    // 按下 Enter 也可以檢查答案
+    function handleAnswerKeydown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        checkAnswer();
+      }
+    }
+
+    // ----- 初始化 -----
+    function init() {
+      buildFrames();
+
+      currentA = 7;
+      currentB = 6;
+      resetToCurrent();
+
+      checkBtn.addEventListener('click', checkAnswer);
+      resetBtn.addEventListener('click', () => {
+        if (autoNextTimer) {
+          clearTimeout(autoNextTimer);
+          autoNextTimer = null;
+        }
+        resetToCurrent();
+      });
+      newQuestionBtn.addEventListener('click', () => {
+        if (autoNextTimer) {
+          clearTimeout(autoNextTimer);
+          autoNextTimer = null;
+        }
+        generateNewQuestion();
+      });
+
+      answerInput.addEventListener('keydown', handleAnswerKeydown);
+      answerInput.addEventListener('input', () => {
+        if (!autoNextTimer) {
+          feedbackEl.textContent = '';
+          feedbackEl.classList.remove('wrong', 'success');
+        }
+      });
+
+      document.addEventListener('dragover', (e) => e.preventDefault());
+      document.addEventListener('drop', (e) => e.preventDefault());
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>
