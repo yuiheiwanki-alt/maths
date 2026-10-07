@@ -1,616 +1,1032 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>十格框加法 · 數粒拖拖樂</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      user-select: none;
-    }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: linear-gradient(145deg, #fef6e4 0%, #ffe9d6 100%);
-      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', '微軟正黑體', cursive, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-    }
-    .game-wrapper {
-      background: #fffaf0;
-      border-radius: 60px 60px 48px 48px;
-      box-shadow: 0 18px 28px rgba(255, 170, 120, 0.18), 0 8px 12px rgba(255, 150, 100, 0.08), inset 0 2px 6px #fffdf8;
-      padding: 32px 28px 40px;
-      max-width: 960px;
-      width: 100%;
-      border: 4px solid #ffd5b5;
-      position: relative;
-    }
-    .game-wrapper::before {
-      content: '🐻';
-      position: absolute;
-      top: -18px;
-      left: 30px;
-      font-size: 2.2rem;
-      transform: rotate(-8deg);
-    }
-    .game-wrapper::after {
-      content: '🌸';
-      position: absolute;
-      top: -14px;
-      right: 40px;
-      font-size: 2rem;
-      transform: rotate(12deg);
-    }
-    h1 {
-      text-align: center;
-      font-size: 2.4rem;
-      margin: 0 0 8px 0;
-      color: #c96f4a;
-      text-shadow: 2px 2px 0 #ffe0cc, 4px 4px 0 rgba(255, 200, 160, 0.4);
-      letter-spacing: 2px;
-      font-weight: 700;
-    }
-    .sub-head {
-      text-align: center;
-      font-size: 1.15rem;
-      color: #b48b6f;
-      margin: -6px 0 24px;
-      font-style: italic;
-    }
-    .question-area {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-    }
-    .equation {
-      font-size: 3.6rem;
-      font-weight: 800;
-      color: #6b4a36;
-      background: #fff3e6;
-      padding: 8px 48px;
-      border-radius: 120px;
-      box-shadow: inset 0 -6px 0 #ffd9be, 0 8px 0 #f5c6a0, 0 12px 18px rgba(255, 180, 140, 0.2);
-      letter-spacing: 8px;
-      border: 3px solid #ffe3cf;
-      font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
-      white-space: nowrap;
-    }
-    .answer-input-area {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      background: #fff3e6;
-      padding: 10px 28px;
-      border-radius: 100px;
-      box-shadow: inset 0 -4px 0 #ffd9be, 0 6px 0 #f5c6a0, 0 8px 14px rgba(255, 180, 140, 0.15);
-      border: 3px solid #ffe3cf;
-    }
-    .answer-input-area label {
-      font-size: 1.6rem;
-      font-weight: bold;
-      color: #a06e4a;
-      letter-spacing: 1px;
-    }
-    .answer-input-area input {
-      width: 110px;
-      font-size: 2rem;
-      font-weight: bold;
-      text-align: center;
-      color: #6b4a36;
-      background: #fffdf9;
-      border: 3px solid #ffd3b8;
-      border-radius: 50px;
-      padding: 6px 0;
-      outline: none;
-      box-shadow: inset 0 2px 6px rgba(255, 180, 140, 0.15);
-      font-family: inherit;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    .answer-input-area input:focus {
-      border-color: #ffb882;
-      box-shadow: inset 0 2px 6px rgba(255, 180, 140, 0.2), 0 0 0 4px rgba(255, 184, 130, 0.25);
-    }
-    .answer-input-area input::placeholder {
-      color: #e0c4aa;
-      font-size: 1.4rem;
-    }
-    .frame-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 40px 30px;
-      margin: 20px 0 30px;
-    }
-    .frame-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-    .frame-label {
-      font-size: 1.15rem;
-      font-weight: bold;
-      color: #a06e4a;
-      background: #ffe8d6;
-      padding: 6px 26px;
-      border-radius: 40px;
-      box-shadow: inset 0 -3px 0 #e6c8b0, 0 4px 0 #d9b89c;
-      border: 2px solid #fff3e9;
-      letter-spacing: 1px;
-    }
-    .ten-frame {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: repeat(2, 1fr);
-      gap: 10px;
-      background: #ffdcc4;
-      padding: 16px;
-      border-radius: 32px;
-      box-shadow: inset 0 0 0 4px #ffc9a8, 0 12px 18px rgba(255, 160, 120, 0.18);
-      width: 100%;
-      min-width: 240px;
-      border: 3px solid #fff0e0;
-    }
-    .cell {
-      width: 60px;
-      height: 60px;
-      background: #fffdf9;
-      border-radius: 18px;
-      box-shadow: inset 0 0 0 2px #ffd3b8, 0 4px 0 #e6b898;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.1s, box-shadow 0.1s;
-      position: relative;
-    }
-    .cell.drop-hover {
-      background: #fff0d6;
-      box-shadow: inset 0 0 0 4px #ffb882, 0 4px 0 #e6b898;
-    }
-    .dot {
-      width: 48px;
-      height: 48px;
-      background: radial-gradient(circle at 35% 35%, #ffb56b, #ff8a4c);
-      border-radius: 50%;
-      box-shadow: 0 4px 0 #d96d2e, 0 6px 10px rgba(220, 120, 60, 0.25);
-      transition: transform 0.1s, box-shadow 0.1s;
-      cursor: grab;
-      border: 3px solid #ffd7b0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .dot:active {
-      cursor: grabbing;
-    }
-    .dot.dragging {
-      opacity: 0.7;
-      transform: scale(0.92);
-      box-shadow: 0 2px 0 #d96d2e, 0 8px 12px rgba(220, 120, 60, 0.3);
-    }
-    .dot.placed {
-      background: radial-gradient(circle at 35% 35%, #ffc491, #ff9e5e);
-      box-shadow: 0 4px 0 #d96d2e, 0 6px 10px rgba(220, 120, 60, 0.2);
-      border-color: #ffe8ce;
-    }
-    .dot.placed:active {
-      cursor: grabbing;
-    }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      margin-top: 24px;
-      align-items: center;
-    }
-    button {
-      background: #ffcf9e;
-      border: none;
-      border-radius: 60px;
-      padding: 14px 32px;
-      font-size: 1.25rem;
-      font-weight: bold;
-      color: #5d3a24;
-      box-shadow: 0 6px 0 #d9a06e, 0 6px 12px rgba(255, 160, 100, 0.2);
-      transition: all 0.08s ease;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: inherit;
-      border: 3px solid #ffe9d4;
-      letter-spacing: 0.5px;
-    }
-    button:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0 #d9a06e, 0 6px 12px rgba(255, 160, 100, 0.2);
-    }
-    button:disabled {
-      opacity: 0.5;
-      transform: translateY(2px);
-      box-shadow: 0 3px 0 #d9a06e;
-      pointer-events: none;
-    }
-    .feedback {
-      font-size: 1.7rem;
-      font-weight: bold;
-      min-height: 3rem;
-      text-align: center;
-      color: #7cb87a;
-      transition: all 0.2s;
-      letter-spacing: 1px;
-      text-shadow: 1px 1px 0 #fff8e7;
-    }
-    .feedback.wrong {
-      color: #e07a5f;
-    }
-    .feedback.success {
-      color: #5a9e5a;
-      animation: bounce 0.5s ease;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-    }
-    .footer-note {
-      text-align: center;
-      margin-top: 16px;
-      color: #c4a188;
-      font-size: 0.9rem;
-    }
-    @media (max-width: 700px) {
-      .equation { font-size: 2.4rem; padding: 8px 24px; letter-spacing: 4px; }
-      .cell { width: 44px; height: 44px; border-radius: 14px; }
-      .dot { width: 34px; height: 34px; border-width: 2px; }
-      .ten-frame { min-width: 180px; gap: 6px; padding: 12px; border-radius: 24px; }
-      h1 { font-size: 1.8rem; }
-      .game-wrapper { padding: 24px 16px 30px; }
-      .answer-input-area { padding: 6px 16px; gap: 8px; }
-      .answer-input-area label { font-size: 1.2rem; }
-      .answer-input-area input { width: 80px; font-size: 1.6rem; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#fef6e4">
+<title>十格框加法 · 數粒拖拖樂</title>
+<style>
+  :root{
+    --cell: 60px;
+    --gap: 10px;
+    --dot: calc(var(--cell) - 12px);
+  }
+  *{
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html{
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body{
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: linear-gradient(145deg, #fef6e4 0%, #ffe9d6 100%);
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', '微軟正黑體', cursive, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    overscroll-behavior: contain;
+    touch-action: manipulation;
+  }
+  .game-wrapper{
+    background: #fffaf0;
+    border-radius: 56px 56px 44px 44px;
+    box-shadow: 0 14px 24px rgba(255, 170, 120, 0.16), 0 6px 10px rgba(255, 150, 100, 0.08), inset 0 2px 6px #fffdf8;
+    padding: 30px 26px 34px;
+    max-width: 960px;
+    width: 100%;
+    border: 4px solid #ffd5b5;
+    position: relative;
+  }
+  .game-wrapper::before{
+    content: '🐻';
+    position: absolute;
+    top: -18px;
+    left: 30px;
+    font-size: 2.2rem;
+    transform: rotate(-8deg);
+  }
+  .game-wrapper::after{
+    content: '🌸';
+    position: absolute;
+    top: -14px;
+    right: 40px;
+    font-size: 2rem;
+    transform: rotate(12deg);
+  }
+  h1{
+    text-align: center;
+    font-size: clamp(1.6rem, 5.2vw, 2.3rem);
+    margin: 0 0 8px 0;
+    color: #c96f4a;
+    text-shadow: 2px 2px 0 #ffe0cc;
+    letter-spacing: 2px;
+    font-weight: 700;
+  }
+  .sub-head{
+    text-align: center;
+    font-size: clamp(0.9rem, 2.8vw, 1.1rem);
+    color: #b48b6f;
+    margin: -4px 0 20px;
+    font-style: italic;
+  }
+  .score-bar{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: -6px 0 18px;
+    flex-wrap: wrap;
+  }
+  .score-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff1dd;
+    border: 3px solid #ffe0c2;
+    border-radius: 100px;
+    padding: 5px 20px;
+    box-shadow: inset 0 -4px 0 #ffe0c2, 0 4px 0 #f0cba6;
+    color: #a06e4a;
+    font-weight: bold;
+    font-size: clamp(0.95rem, 3.2vw, 1.15rem);
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .score-chip .score-value{
+    font-size: clamp(1.5rem, 5.5vw, 1.9rem);
+    color: #e07a3f;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+    min-width: 1.3em;
+    text-align: center;
+    display: inline-block;
+    line-height: 1;
+  }
+  .score-chip.bump .score-value{
+    animation: scoreBump 0.45s ease;
+  }
+  @keyframes scoreBump{
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.5); }
+    100% { transform: scale(1); }
+  }
+  button.score-reset{
+    padding: 6px 16px;
+    min-height: 44px;
+    font-size: clamp(0.85rem, 2.8vw, 1rem);
+    background: #ffe6cd;
+    box-shadow: 0 4px 0 #e0b58c;
+  }
+  button.score-reset:active{
+    background: #ffd9b3;
+  }
+  .question-area{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .equation{
+    font-size: clamp(2.2rem, 9vw, 3.4rem);
+    font-weight: 800;
+    color: #6b4a36;
+    background: #fff3e6;
+    padding: 6px 40px;
+    border-radius: 120px;
+    box-shadow: inset 0 -6px 0 #ffd9be, 0 6px 0 #f5c6a0;
+    letter-spacing: 6px;
+    border: 3px solid #ffe3cf;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+    white-space: nowrap;
+    text-indent: 6px;
+  }
+  /* ---------- 五選一選項 ---------- */
+  .options-area{
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin: 2px 0 20px;
+  }
+  button.option-btn{
+    background: #fff6ea;
+    border: 3px solid #ffdcbf;
+    border-radius: 26px;
+    box-shadow: inset 0 -6px 0 #ffe7d2, 0 5px 0 #e9c9a8;
+    color: #8a5a3c;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+    font-weight: 800;
+    font-size: clamp(1.3rem, 5.6vw, 2.1rem);
+    min-height: clamp(66px, 15vw, 90px);
+    min-width: 0;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 1px;
+    overflow: hidden;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s, color 0.15s;
+  }
+  button.option-btn:active{
+    transform: translateY(5px);
+    box-shadow: inset 0 -6px 0 #ffe7d2, 0 0 0 #e9c9a8;
+    background: #ffeeda;
+  }
+  button.option-btn.correct{
+    background: #cdeab8;
+    border-color: #a9da8d;
+    color: #3d6a2a;
+    box-shadow: inset 0 -6px 0 #ddf3cd, 0 5px 0 #8cbf6a;
+    animation: optionPop 0.45s ease;
+  }
+  button.option-btn.wrong{
+    background: #f2dcd5;
+    border-color: #e7c6bc;
+    color: #bb7a66;
+    box-shadow: inset 0 -6px 0 #f7e6e0, 0 3px 0 #dbb3a6;
+    text-decoration: line-through;
+  }
+  button.option-btn:disabled{
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+  }
+  @keyframes optionPop{
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  .frame-container{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 20px 22px;
+    margin: 14px 0 22px;
+  }
+  .frame-box{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .frame-label{
+    font-size: clamp(0.95rem, 3vw, 1.1rem);
+    font-weight: bold;
+    color: #a06e4a;
+    background: #ffe8d6;
+    padding: 6px 22px;
+    border-radius: 40px;
+    box-shadow: inset 0 -3px 0 #e6c8b0, 0 3px 0 #d9b89c;
+    border: 2px solid #fff3e9;
+    letter-spacing: 1px;
+  }
+  .ten-frame{
+    display: grid;
+    grid-template-columns: repeat(5, var(--cell));
+    grid-template-rows: repeat(2, var(--cell));
+    gap: var(--gap);
+    background: #ffdcc4;
+    padding: 14px;
+    border-radius: 28px;
+    box-shadow: inset 0 0 0 4px #ffc9a8, 0 8px 14px rgba(255, 160, 120, 0.16);
+    border: 3px solid #fff0e0;
+  }
+  .cell{
+    width: var(--cell);
+    height: var(--cell);
+    background: #fffdf9;
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 2px #ffd3b8, 0 3px 0 #e6b898;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  /* 有圓點被選中時，空格微微發亮提示可以放這裡 */
+  body.has-selection .cell:empty{
+    background: #fff5e6;
+    box-shadow: inset 0 0 0 3px #ffc79a, 0 3px 0 #e6b898;
+    cursor: pointer;
+  }
+  .cell.drop-hover{
+    background: #fff0d6;
+    box-shadow: inset 0 0 0 4px #ffb882, 0 3px 0 #e6b898;
+  }
+  .dot{
+    width: var(--dot);
+    height: var(--dot);
+    background: radial-gradient(circle at 35% 35%, #ffb56b, #ff8a4c);
+    border-radius: 50%;
+    box-shadow: 0 4px 0 #d96d2e;
+    border: 3px solid #ffd7b0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    touch-action: none;          /* 關鍵：手指按住圓點時不讓頁面捲動 */
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    user-select: none;
+    will-change: transform;
+  }
+  .dot.dragging{
+    opacity: 0.28;
+    box-shadow: none;
+  }
+  .dot.selected{
+    box-shadow: 0 0 0 4px rgba(255, 138, 76, 0.45), 0 4px 0 #d96d2e;
+  }
+  .dot.just-moved{
+    animation: dotPop 0.3s ease-out;
+  }
+  @keyframes dotPop{
+    0%   { transform: scale(0.65); }
+    60%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  /* 跟著手指走的浮動圓點 */
+  .ghost-dot{
+    position: fixed;
+    left: 0;
+    top: 0;
+    margin: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.95;
+    box-shadow: 0 6px 14px rgba(220, 120, 60, 0.35);
+    transform-origin: center center;
+  }
+  .controls{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+    align-items: center;
+  }
+  button{
+    background: #ffcf9e;
+    border: 3px solid #ffe9d4;
+    border-radius: 60px;
+    padding: 14px 28px;
+    font-size: clamp(1rem, 3.4vw, 1.2rem);
+    font-weight: bold;
+    color: #5d3a24;
+    box-shadow: 0 5px 0 #d9a06e;
+    transition: transform 0.06s ease, box-shadow 0.06s ease, background 0.12s;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    touch-action: manipulation;
+    min-height: 52px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  button:active{
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #d9a06e;
+    background: #ffc389;
+  }
+  .feedback{
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+    font-weight: bold;
+    min-height: 2.6rem;
+    text-align: center;
+    color: #7cb87a;
+    transition: color 0.2s;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #fff8e7;
+    padding: 0 6px;
+  }
+  .feedback.wrong{ color: #e07a5f; }
+  .feedback.success{
+    color: #5a9e5a;
+    animation: bounce 0.5s ease;
+  }
+  @keyframes bounce{
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .footer-note{
+    text-align: center;
+    margin-top: 14px;
+    color: #c4a188;
+    font-size: clamp(0.8rem, 2.6vw, 0.9rem);
+    line-height: 1.6;
+  }
+
+  /* ---------- 平板（iPad 直向 768–860）---------- */
+  @media (max-width: 860px){
+    :root{ --cell: 50px; --gap: 8px; }
+    .game-wrapper{ padding: 26px 18px 30px; border-radius: 44px; }
+    .ten-frame{ padding: 12px; border-radius: 24px; }
+    .cell{ border-radius: 14px; }
+    .frame-container{ gap: 16px 18px; }
+  }
+  /* ---------- 手機 ---------- */
+  @media (max-width: 560px){
+    :root{ --cell: 42px; --gap: 6px; }
+    body{ padding: 8px; }
+    .game-wrapper{ padding: 20px 12px 24px; border-radius: 32px; }
+    .game-wrapper::before, .game-wrapper::after{ display: none; }
+    .ten-frame{ padding: 9px; border-radius: 20px; box-shadow: inset 0 0 0 3px #ffc9a8; }
+    .cell{ border-radius: 12px; }
+    .equation{ padding: 4px 22px; letter-spacing: 3px; }
+    .options-area{ gap: 8px; margin-bottom: 16px; }
+    button.option-btn{ border-radius: 18px; border-width: 2px; }
+    .controls{ gap: 10px; }
+    button{ padding: 12px 20px; flex: 1 1 auto; justify-content: center; }
+  }
+  /* 橫向矮螢幕時不要撐爆畫面 */
+  @media (max-height: 560px) and (orientation: landscape){
+    :root{ --cell: 40px; --gap: 6px; }
+    body{ align-items: flex-start; }
+    .game-wrapper{ margin: 0 auto; }
+  }
+</style>
 </head>
 <body>
 <div class="game-wrapper">
   <h1>🧸 十格框加法</h1>
-  <div class="sub-head">圓點已經排好囉！可以移動圓點，也可以直接輸入答案</div>
+  <div class="sub-head">用手指按住圓點拖去另一格，或先點圓點、再點空格</div>
 
-  <!-- 題目區域 + 答案輸入 -->
-  <div class="question-area">
-    <div class="equation" id="equationDisplay">7 + 6</div>
-    <div class="answer-input-area">
-      <label>=</label>
-      <input type="number" id="answerInput" placeholder="?" min="0" max="99" inputmode="numeric">
+  <!-- 得分 -->
+  <div class="score-bar">
+    <div class="score-chip" id="scoreChip" aria-live="polite">
+      <span>⭐</span><span>答對</span>
+      <span class="score-value" id="scoreValue">0</span>
+      <span>題</span>
     </div>
+    <button class="score-reset" id="scoreResetBtn" type="button">↺ 歸零</button>
   </div>
+
+  <!-- 題目 -->
+  <div class="question-area">
+    <div class="equation" id="equationDisplay">7 + 6 = ?</div>
+  </div>
+
+  <!-- 五選一 -->
+  <div class="options-area" id="optionsArea" role="group" aria-label="選擇答案"></div>
 
   <!-- 兩個十格框 -->
   <div class="frame-container">
     <div class="frame-box">
       <div class="frame-label">🌸 第一個數</div>
-      <div class="ten-frame" id="frame1" data-frame="1">
-        <!-- 10 個格子由 js 生成 -->
-      </div>
+      <div class="ten-frame" id="frame1" data-frame="1"></div>
     </div>
     <div class="frame-box">
       <div class="frame-label">🍀 第二個數</div>
-      <div class="ten-frame" id="frame2" data-frame="2">
-        <!-- 10 個格子由 js 生成 -->
-      </div>
+      <div class="ten-frame" id="frame2" data-frame="2"></div>
     </div>
   </div>
 
   <!-- 反饋與控制 -->
-  <div class="feedback" id="feedback"></div>
+  <div class="feedback" id="feedback" aria-live="polite"></div>
   <div class="controls">
-    <button id="checkBtn">✅ 檢查答案</button>
-    <button id="resetBtn">🔄 重新開始</button>
-    <button id="newQuestionBtn">🎲 換一題</button>
+    <button id="resetBtn" type="button">🔄 重新開始</button>
+    <button id="newQuestionBtn" type="button">🎲 換一題</button>
   </div>
-  <div class="footer-note">💡 拖曳圓點：可以在兩個十格框之間移動</div>
+  <div class="footer-note">
+    💡 先在上面選出正確答案<br>
+    按住圓點 ⇢ 拖到想放的格子（也可以「點圓點，再點空格」）
+  </div>
 </div>
 
 <script>
-  (function() {
-    // ----- 遊戲狀態 -----
-    let currentA = 7;
-    let currentB = 6;
-    const totalAnswer = () => currentA + currentB;
+(function () {
+  'use strict';
 
-    let frame1State = new Array(10).fill(0);
-    let frame2State = new Array(10).fill(0);
+  var TOTAL = 10;
+  var MOVE_THRESHOLD = 8;   // 移動超過 8px 才算拖曳，否則算點擊
 
-    // 自動換題計時器
-    let autoNextTimer = null;
+  // ---------- 遊戲狀態 ----------
+  var currentA = 7;
+  var currentB = 6;
+  var frame1State = new Array(TOTAL).fill(0);
+  var frame2State = new Array(TOTAL).fill(0);
+  var autoNextTimer = null;
 
-    // DOM 元素
-    const equationDisplay = document.getElementById('equationDisplay');
-    const answerInput = document.getElementById('answerInput');
-    const frame1El = document.getElementById('frame1');
-    const frame2El = document.getElementById('frame2');
-    const feedbackEl = document.getElementById('feedback');
-    const checkBtn = document.getElementById('checkBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const newQuestionBtn = document.getElementById('newQuestionBtn');
+  var selected = null;   // { frame: 1|2, index: n }
+  var popTarget = null;  // 剛放下的圓點，做放大動畫
+  var drag = null;       // 拖曳中
+  var pendingTap = null; // 點在空格上的待確認點擊
 
-    // 拖曳狀態
-    let draggedDot = null;
-    let draggedFrom = null;
+  // ---------- 得分 ----------
+  var SCORE_KEY = 'sum10frame_score_v1';
+  var score = loadScore();
+  var scoredThisQuestion = false;
 
-    // ----- 初始化十格框格子 -----
-    function buildFrames() {
-      [frame1El, frame2El].forEach((frame, idx) => {
-        frame.innerHTML = '';
-        for (let i = 0; i < 10; i++) {
-          const cell = document.createElement('div');
-          cell.className = 'cell';
-          cell.dataset.frame = idx + 1;
-          cell.dataset.index = i;
-          cell.addEventListener('dragover', handleDragOver);
-          cell.addEventListener('dragleave', handleDragLeave);
-          cell.addEventListener('drop', handleDrop);
-          frame.appendChild(cell);
-        }
-      });
+  function loadScore() {
+    try {
+      var raw = window.localStorage.getItem(SCORE_KEY);
+      if (raw === null) return 0;
+      var n = parseInt(raw, 10);
+      return (isNaN(n) || n < 0) ? 0 : n;
+    } catch (err) {
+      return 0;
     }
-
-    // ----- 根據狀態渲染所有圓點 -----
-    function render() {
-      document.querySelectorAll('.dot').forEach(dot => dot.remove());
-
-      const cells1 = frame1El.querySelectorAll('.cell');
-      frame1State.forEach((filled, idx) => {
-        if (filled) {
-          const dot = createDotElement('frame', 1, idx);
-          cells1[idx].appendChild(dot);
-        }
-      });
-
-      const cells2 = frame2El.querySelectorAll('.cell');
-      frame2State.forEach((filled, idx) => {
-        if (filled) {
-          const dot = createDotElement('frame', 2, idx);
-          cells2[idx].appendChild(dot);
-        }
-      });
-
-      equationDisplay.textContent = `${currentA} + ${currentB}`;
+  }
+  function saveScore() {
+    try { window.localStorage.setItem(SCORE_KEY, String(score)); } catch (err) {}
+  }
+  function renderScore(bump) {
+    if (!scoreValueEl) return;
+    scoreValueEl.textContent = String(score);
+    if (bump && scoreChipEl) {
+      scoreChipEl.classList.remove('bump');
+      void scoreChipEl.offsetWidth;   // 強制重排，讓動畫可以重新播放
+      scoreChipEl.classList.add('bump');
     }
+  }
+  function addScore() {
+    score += 1;
+    saveScore();
+    renderScore(true);
+  }
+  function resetScore() {
+    score = 0;
+    saveScore();
+    renderScore(false);
+  }
 
-    // 建立一個圓點 DOM
-    function createDotElement(sourceType, frameId, index) {
-      const dot = document.createElement('div');
-      dot.className = 'dot' + (sourceType === 'frame' ? ' placed' : '');
-      dot.draggable = true;
-      dot.setAttribute('aria-label', '數粒');
+  // ---------- DOM ----------
+  var equationDisplay = document.getElementById('equationDisplay');
+  var optionsArea = document.getElementById('optionsArea');
+  var frame1El = document.getElementById('frame1');
+  var frame2El = document.getElementById('frame2');
+  var feedbackEl = document.getElementById('feedback');
+  var resetBtn = document.getElementById('resetBtn');
+  var newQuestionBtn = document.getElementById('newQuestionBtn');
+  var scoreValueEl = document.getElementById('scoreValue');
+  var scoreChipEl = document.getElementById('scoreChip');
+  var scoreResetBtn = document.getElementById('scoreResetBtn');
 
-      dot.dataset.sourceType = sourceType;
-      if (sourceType === 'frame') {
-        dot.dataset.frameId = frameId;
-        dot.dataset.index = index;
+  function arr(f) { return f === 1 ? frame1State : frame2State; }
+  function frameEl(f) { return f === 1 ? frame1El : frame2El; }
+
+  // ---------- 建立格子 ----------
+  function buildFrames() {
+    [frame1El, frame2El].forEach(function (frame, idx) {
+      frame.innerHTML = '';
+      for (var i = 0; i < TOTAL; i++) {
+        var cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.frame = String(idx + 1);
+        cell.dataset.index = String(i);
+        frame.appendChild(cell);
       }
+    });
+  }
 
-      dot.addEventListener('dragstart', handleDragStart);
-      dot.addEventListener('dragend', handleDragEnd);
-      dot.addEventListener('drag', (e) => e.preventDefault());
-      return dot;
+  // ---------- 建立圓點 ----------
+  function makeDot(frame, index) {
+    var dot = document.createElement('div');
+    dot.className = 'dot placed';
+    dot.dataset.frame = String(frame);
+    dot.dataset.index = String(index);
+    dot.setAttribute('draggable', 'false');
+    dot.setAttribute('role', 'img');
+    dot.setAttribute('aria-label', '數粒');
+    if (popTarget && popTarget.frame === frame && popTarget.index === index) {
+      dot.classList.add('just-moved');
+    }
+    if (selected && selected.frame === frame && selected.index === index) {
+      dot.classList.add('selected');
+    }
+    return dot;
+  }
+
+  // ---------- 渲染 ----------
+  function render() {
+    [1, 2].forEach(function (f) {
+      var cells = frameEl(f).children;
+      var state = arr(f);
+      for (var i = 0; i < TOTAL; i++) {
+        var cell = cells[i];
+        var wantDot = state[i] === 1;
+        var hasDot = cell.firstElementChild !== null;
+        cell.classList.remove('drop-hover');
+        if (wantDot) {
+          if (!hasDot) cell.appendChild(makeDot(f, i));
+        } else if (hasDot) {
+          cell.removeChild(cell.firstElementChild);
+        }
+      }
+    });
+    // 同步「選取」狀態到畫面上所有圓點（圓點是重用的，所以統一在這裡處理）
+    var dots = document.querySelectorAll('.dot');
+    for (var k = 0; k < dots.length; k++) {
+      var d = dots[k];
+      var isSel = selected &&
+        d.dataset.frame === String(selected.frame) &&
+        d.dataset.index === String(selected.index);
+      d.classList.toggle('selected', !!isSel);
     }
 
-    // ----- 拖曳事件處理 -----
-    function handleDragStart(e) {
-      const dot = e.target;
-      if (!dot.classList.contains('dot')) return;
+    equationDisplay.textContent = currentA + ' + ' + currentB + ' = ?';
+    document.body.classList.toggle('has-selection', selected !== null);
+    popTarget = null;
+  }
 
-      draggedDot = dot;
-      const sourceType = dot.dataset.sourceType;
-      const frameId = dot.dataset.frameId ? parseInt(dot.dataset.frameId) : null;
-      const index = dot.dataset.index !== undefined ? parseInt(dot.dataset.index) : null;
+  // ---------- 搬動圓點 ----------
+  function moveDot(fromFrame, fromIndex, toFrame, toIndex) {
+    if (fromFrame === toFrame && fromIndex === toIndex) return false;
+    var fromArr = arr(fromFrame);
+    var toArr = arr(toFrame);
+    if (fromArr[fromIndex] !== 1) return false;
+    if (toArr[toIndex] !== 0) return false;
+    fromArr[fromIndex] = 0;
+    toArr[toIndex] = 1;
+    return true;
+  }
 
-      draggedFrom = { type: sourceType, frameId, index };
+  // strict = true：只接受真正指到的空格（點擊用）
+  // strict = false：指到滿格時自動找最近的空格（拖曳用，手感更好）
+  function resolveTarget(frame, index, strict) {
+    var state = arr(frame);
+    if (index !== null && index !== undefined && state[index] === 0) {
+      return { frame: frame, index: index };
+    }
+    if (strict) return null;
+    var i;
+    if (index === null || index === undefined) {
+      for (i = 0; i < TOTAL; i++) if (state[i] === 0) return { frame: frame, index: i };
+      return null;
+    }
+    for (var d = 1; d < TOTAL; d++) {
+      var a = index - d, b = index + d;
+      if (a >= 0 && state[a] === 0) return { frame: frame, index: a };
+      if (b < TOTAL && state[b] === 0) return { frame: frame, index: b };
+    }
+    return null;
+  }
 
-      e.dataTransfer.setData('text/plain', 'dot');
-      e.dataTransfer.effectAllowed = 'move';
+  function applyMove(from, dest) {
+    if (!moveDot(from.frame, from.index, dest.frame, dest.index)) return false;
+    selected = { frame: dest.frame, index: dest.index };
+    popTarget = { frame: dest.frame, index: dest.index };
+    clearFeedback();
+    render();
+    return true;
+  }
 
-      setTimeout(() => dot.classList.add('dragging'), 0);
+  // ---------- 反饋 ----------
+  function cancelAutoNext() {
+    if (autoNextTimer) {
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
+    }
+  }
+
+  // 只清畫面提示；刻意不取消「答對後自動換題」的計時器
+  function clearFeedback() {
+    feedbackEl.textContent = '';
+    feedbackEl.classList.remove('wrong', 'success');
+  }
+
+  // ---------- 重置到當前題目 ----------
+  function resetToCurrent() {
+    cancelAutoNext();
+    clearFeedback();
+    selected = null;
+    scoredThisQuestion = false;
+
+    frame1State = new Array(TOTAL).fill(0);
+    frame2State = new Array(TOTAL).fill(0);
+    for (var i = 0; i < currentA && i < TOTAL; i++) frame1State[i] = 1;
+    for (var j = 0; j < currentB && j < TOTAL; j++) frame2State[j] = 1;
+
+    render();
+    renderOptions();
+  }
+
+  // ---------- 五選一 ----------
+  function shuffle(list) {
+    for (var i = list.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = list[i]; list[i] = list[j]; list[j] = t;
+    }
+    return list;
+  }
+
+  // 產生 5 個「相近」的選項：以正確答案為中心取一段鄰近數字，
+  // 並用 bias 令正確答案不會永遠排在中間，避免學生靠大小猜。
+  function buildChoices(sum) {
+    var MIN = 2, MAX = 20;
+    var bias = Math.floor(Math.random() * 5) - 2;   // -2 ~ 2
+    var chosen = [];
+    function push(v) {
+      if (v < MIN || v > MAX) return;
+      if (chosen.indexOf(v) !== -1) return;
+      chosen.push(v);
+    }
+    for (var k = -2; k <= 2; k++) push(sum + bias + k);   // sum 必定在內
+    for (var step = 1; chosen.length < 5 && step < 30; step++) {
+      push(sum + step);
+      push(sum - step);
+    }
+    for (var n = MIN; chosen.length < 5 && n <= MAX; n++) push(n);
+
+    var result = [];
+    for (var m = 0; m < chosen.length && result.length < 5; m++) result.push(chosen[m]);
+    if (result.indexOf(sum) === -1) result[4] = sum;
+    return shuffle(result);
+  }
+
+  function renderOptions() {
+    optionsArea.innerHTML = '';
+    var expected = currentA + currentB;
+    var choices = buildChoices(expected);
+    choices.forEach(function (value) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'option-btn';
+      btn.textContent = String(value);
+      btn.dataset.value = String(value);
+      btn.setAttribute('aria-label', '答案 ' + value);
+      btn.addEventListener('click', function () { handleChoice(value, btn); });
+      optionsArea.appendChild(btn);
+    });
+  }
+
+  function countDots() {
+    var c1 = frame1State.reduce(function (a, b) { return a + b; }, 0);
+    var c2 = frame2State.reduce(function (a, b) { return a + b; }, 0);
+    return c1 + c2;
+  }
+
+  // ---------- 選了某個答案 ----------
+  function handleChoice(value, btn) {
+    if (autoNextTimer) return;        // 已答對，正在等下一題，鎖住
+    if (btn.disabled) return;
+
+    var expected = currentA + currentB;
+    feedbackEl.classList.remove('wrong', 'success');
+
+    if (value === expected) {
+      btn.classList.add('correct');
+      // 標記其餘選項，避免連點
+      var all = optionsArea.querySelectorAll('.option-btn');
+      for (var i = 0; i < all.length; i++) all[i].disabled = true;
+
+      if (!scoredThisQuestion) {
+        scoredThisQuestion = true;
+        addScore();
+      }
+      feedbackEl.textContent = '✅ 太棒了！' + currentA + ' + ' + currentB + ' = ' + expected +
+        '，已答對 ' + score + ' 題！下一題來囉～';
+      feedbackEl.classList.add('success');
+      autoNextTimer = setTimeout(generateNewQuestion, 1700);
+      return;
     }
 
-    function handleDragEnd(e) {
-      const dot = e.target;
-      dot.classList.remove('dragging');
-      document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('drop-hover'));
-      draggedDot = null;
-      draggedFrom = null;
-    }
+    // 答錯：標記並停用該選項，讓學生再選
+    btn.classList.add('wrong');
+    btn.disabled = true;
+    var totalInFrames = countDots();
+    feedbackEl.textContent = '❌ 「' + value + '」不對喔。框裡一共有 ' + totalInFrames +
+      ' 個圓點，數一數，再選一次吧！';
+    feedbackEl.classList.add('wrong');
+  }
 
-    function handleDragOver(e) {
+  // ---------- 出新題 ----------
+  function generateNewQuestion() {
+    var a, b;
+    do {
+      a = Math.floor(Math.random() * 8) + 2;
+      b = Math.floor(Math.random() * 8) + 2;
+    } while (a + b < 4 || a + b > 18);
+    currentA = a;
+    currentB = b;
+    resetToCurrent();
+  }
+
+  // ================= 觸控 / 滑鼠拖曳（Pointer Events） =================
+  // HTML5 dragstart / drop 在 iPad Safari 完全不會觸發，所以改用 Pointer Events。
+
+  function addPointerListeners() {
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  }
+  function removePointerListeners() {
+    window.removeEventListener('pointermove', onPointerMove, { passive: false });
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+  }
+
+  function eventPoint(e) {
+    return { x: e.clientX, y: e.clientY };
+  }
+
+  function onPointerDown(e) {
+    // 只處理主鍵 / 觸控
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    var t = e.target;
+    if (!t || !t.closest) return;
+
+    var dotEl = t.closest('.dot');
+    if (dotEl) {
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      const cell = e.currentTarget;
-      if (cell.classList.contains('cell')) {
-        cell.classList.add('drop-hover');
-      }
+      var p = eventPoint(e);
+      drag = {
+        pointerId: e.pointerId,
+        dotEl: dotEl,
+        from: { frame: +dotEl.dataset.frame, index: +dotEl.dataset.index },
+        startX: p.x, startY: p.y,
+        x: p.x, y: p.y,
+        offsetX: 0, offsetY: 0,
+        moved: false,
+        ghost: null,
+        raf: 0
+      };
+      addPointerListeners();
+      return;
     }
 
-    function handleDragLeave(e) {
-      const cell = e.currentTarget;
-      cell.classList.remove('drop-hover');
+    var cellEl = t.closest('.cell');
+    if (cellEl && selected) {
+      var q = eventPoint(e);
+      pendingTap = { cell: cellEl, startX: q.x, startY: q.y, moved: false };
+      addPointerListeners();
     }
+  }
 
-    function handleDrop(e) {
-      e.preventDefault();
-      const cell = e.currentTarget;
-      cell.classList.remove('drop-hover');
+  function onPointerMove(e) {
+    var p = eventPoint(e);
 
-      if (!draggedDot || !draggedFrom) return;
-
-      const targetFrame = parseInt(cell.dataset.frame);
-      const targetIndex = parseInt(cell.dataset.index);
-
-      let targetArray = targetFrame === 1 ? frame1State : frame2State;
-      if (targetArray[targetIndex] === 1) return;
-
-      const source = draggedFrom;
-
-      if (source.type === 'frame') {
-        const srcFrame = source.frameId;
-        const srcIdx = source.index;
-        const srcArray = srcFrame === 1 ? frame1State : frame2State;
-        if (srcArray[srcIdx] === 0) return;
-        srcArray[srcIdx] = 0;
+    if (drag) {
+      drag.x = p.x;
+      drag.y = p.y;
+      var dx = p.x - drag.startX;
+      var dy = p.y - drag.startY;
+      if (!drag.moved && (dx * dx + dy * dy) > (MOVE_THRESHOLD * MOVE_THRESHOLD)) {
+        drag.moved = true;
+        startGhost();
       }
-
-      targetArray[targetIndex] = 1;
-
-      render();
-      clearFeedback();
-
-      draggedDot = null;
-      draggedFrom = null;
-    }
-
-    // 清除反饋與自動換題計時器
-    function clearFeedback() {
-      feedbackEl.textContent = '';
-      feedbackEl.classList.remove('wrong', 'success');
-      if (autoNextTimer) {
-        clearTimeout(autoNextTimer);
-        autoNextTimer = null;
-      }
-    }
-
-    // ----- 重置到當前題目的初始狀態 -----
-    function resetToCurrent() {
-      clearFeedback();
-
-      frame1State = new Array(10).fill(0);
-      frame2State = new Array(10).fill(0);
-
-      for (let i = 0; i < currentA && i < 10; i++) {
-        frame1State[i] = 1;
-      }
-      for (let i = 0; i < currentB && i < 10; i++) {
-        frame2State[i] = 1;
-      }
-
-      answerInput.value = '';
-
-      render();
-      document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('drop-hover'));
-    }
-
-    // ----- 檢查答案 -----
-    function checkAnswer() {
-      if (autoNextTimer) {
-        clearTimeout(autoNextTimer);
-        autoNextTimer = null;
-      }
-
-      const expected = totalAnswer();
-      const inputVal = answerInput.value.trim();
-      const inputNum = parseInt(inputVal, 10);
-
-      const count1 = frame1State.reduce((a, b) => a + b, 0);
-      const count2 = frame2State.reduce((a, b) => a + b, 0);
-      const totalInFrames = count1 + count2;
-
-      const inputCorrect = !isNaN(inputNum) && inputNum === expected;
-      const dotsCorrect = totalInFrames === expected;
-
-      if (inputCorrect && dotsCorrect) {
-        feedbackEl.textContent = `✅ 太棒了！${currentA} + ${currentB} = ${expected}，下一題來囉～`;
-        feedbackEl.classList.remove('wrong');
-        feedbackEl.classList.add('success');
-
-        autoNextTimer = setTimeout(() => {
-          generateNewQuestion();
-        }, 1500);
-      } else if (!inputCorrect && isNaN(inputNum)) {
-        if (dotsCorrect) {
-          feedbackEl.textContent = `👌 圓點排對了！不過還沒輸入答案喔，請在「=」後面填入 ${expected}`;
-        } else {
-          feedbackEl.textContent = `❌ 再試試看，框裡現在有 ${totalInFrames} 個圓點，目標是 ${expected}`;
-        }
-        feedbackEl.classList.add('wrong');
-        feedbackEl.classList.remove('success');
-      } else if (!inputCorrect) {
-        feedbackEl.textContent = `❌ 答案不對喔，再算算看！`;
-        feedbackEl.classList.add('wrong');
-        feedbackEl.classList.remove('success');
-      } else if (!dotsCorrect) {
-        feedbackEl.textContent = `答案對了！不過框裡的圓點有 ${totalInFrames} 個，和答案 ${expected} 不一樣，再調整一下圓點吧！`;
-        feedbackEl.classList.add('wrong');
-        feedbackEl.classList.remove('success');
-      }
-    }
-
-    // ----- 生成新題目 (每個數字 2-9，答案 4-18) -----
-    function generateNewQuestion() {
-      let a, b;
-      do {
-        a = Math.floor(Math.random() * 8) + 2; // 2 到 9
-        b = Math.floor(Math.random() * 8) + 2; // 2 到 9
-      } while (a + b < 4 || a + b > 18);
-      currentA = a;
-      currentB = b;
-      resetToCurrent();
-    }
-
-    // 按下 Enter 也可以檢查答案
-    function handleAnswerKeydown(e) {
-      if (e.key === 'Enter') {
+      if (drag.ghost) {
         e.preventDefault();
-        checkAnswer();
+        scheduleGhost();
+      }
+      return;
+    }
+
+    if (pendingTap) {
+      var ddx = p.x - pendingTap.startX;
+      var ddy = p.y - pendingTap.startY;
+      if ((ddx * ddx + ddy * ddy) > (MOVE_THRESHOLD * MOVE_THRESHOLD)) {
+        pendingTap.moved = true;
       }
     }
+  }
 
-    // ----- 初始化 -----
-    function init() {
-      buildFrames();
+  function onPointerUp() {
+    removePointerListeners();
 
-      currentA = 7;
-      currentB = 6;
-      resetToCurrent();
-
-      checkBtn.addEventListener('click', checkAnswer);
-      resetBtn.addEventListener('click', () => {
-        if (autoNextTimer) {
-          clearTimeout(autoNextTimer);
-          autoNextTimer = null;
+    if (drag) {
+      if (drag.moved) {
+        finishDrag();
+      } else {
+        // 視為點擊：切換選取
+        var f = drag.from;
+        if (selected && selected.frame === f.frame && selected.index === f.index) {
+          selected = null;
+        } else {
+          selected = { frame: f.frame, index: f.index };
         }
-        resetToCurrent();
-      });
-      newQuestionBtn.addEventListener('click', () => {
-        if (autoNextTimer) {
-          clearTimeout(autoNextTimer);
-          autoNextTimer = null;
-        }
-        generateNewQuestion();
-      });
-
-      answerInput.addEventListener('keydown', handleAnswerKeydown);
-      answerInput.addEventListener('input', () => {
-        if (!autoNextTimer) {
-          feedbackEl.textContent = '';
-          feedbackEl.classList.remove('wrong', 'success');
-        }
-      });
-
-      document.addEventListener('dragover', (e) => e.preventDefault());
-      document.addEventListener('drop', (e) => e.preventDefault());
+        if (drag.dotEl) drag.dotEl.classList.remove('dragging');
+        drag = null;
+        render();
+      }
+      return;
     }
 
+    if (pendingTap) {
+      if (!pendingTap.moved) handleCellTap(pendingTap.cell);
+      pendingTap = null;
+    }
+  }
+
+  // ---------- 浮動圓點（跟手指） ----------
+  function startGhost() {
+    if (!drag || drag.ghost) return;
+    var rect = drag.dotEl.getBoundingClientRect();
+    var ghost = drag.dotEl.cloneNode(true);
+    ghost.classList.remove('selected', 'dragging');
+    ghost.classList.add('ghost-dot');
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    document.body.appendChild(ghost);
+
+    drag.ghost = ghost;
+    drag.offsetX = drag.startX - rect.left;
+    drag.offsetY = drag.startY - rect.top;
+    drag.ghostW = rect.width;
+    drag.ghostX = rect.left;
+    drag.ghostY = rect.top;
+
+    drag.dotEl.classList.add('dragging');
+    positionGhost();
+  }
+
+  function scheduleGhost() {
+    if (!drag || drag.raf) return;
+    drag.raf = window.requestAnimationFrame(function () {
+      if (!drag) return;
+      drag.raf = 0;
+      positionGhost();
+    });
+  }
+
+  function positionGhost() {
+    if (!drag || !drag.ghost) return;
+    var x = drag.x - drag.offsetX;
+    var y = drag.y - drag.offsetY;
+    drag.ghostX = x;
+    drag.ghostY = y;
+    drag.ghost.style.transform =
+      'translate3d(' + x + 'px,' + y + 'px,0) scale(1.14)';
+    highlightUnderPointer(drag.x, drag.y);
+  }
+
+  function cleanupGhost() {
+    if (!drag) return;
+    if (drag.raf) {
+      window.cancelAnimationFrame(drag.raf);
+      drag.raf = 0;
+    }
+    if (drag.ghost && drag.ghost.parentNode) {
+      drag.ghost.parentNode.removeChild(drag.ghost);
+    }
+    if (drag.dotEl) drag.dotEl.classList.remove('dragging');
+    clearDropHover();
+  }
+
+  function clearDropHover() {
+    var hovered = document.querySelectorAll('.cell.drop-hover');
+    for (var i = 0; i < hovered.length; i++) hovered[i].classList.remove('drop-hover');
+  }
+
+  function cellUnderPoint(x, y, useGhostCenter) {
+    if (useGhostCenter && drag && drag.ghost) {
+      x = drag.ghostX + drag.ghostW / 2;
+      y = drag.ghostY + drag.ghostW / 2;
+    }
+    var el = document.elementFromPoint(x, y);
+    if (!el || !el.closest) return null;
+    var cellEl = el.closest('.cell');
+    if (cellEl) return cellEl;
+    return null;
+  }
+
+  function highlightUnderPointer(x, y) {
+    var cellEl = cellUnderPoint(x, y, true);
+    clearDropHover();
+    if (cellEl) cellEl.classList.add('drop-hover');
+  }
+
+  function finishDrag() {
+    var cellEl = cellUnderPoint(drag.x, drag.y, true);
+    var from = drag.from;
+    var dest = null;
+
+    if (cellEl) {
+      var frame = +cellEl.dataset.frame;
+      var index = +cellEl.dataset.index;
+      if (!(frame === from.frame && index === from.index)) {
+        dest = resolveTarget(frame, index, false);
+      }
+    } else if (drag.ghost) {
+      // 拖到框的空白邊緣也算，找最近空格
+      var el = document.elementFromPoint(drag.ghostX + drag.ghostW / 2, drag.ghostY + drag.ghostW / 2);
+      var frameElUnder = el && el.closest ? el.closest('.ten-frame') : null;
+      if (frameElUnder) dest = resolveTarget(+frameElUnder.dataset.frame, null, false);
+    }
+
+    cleanupGhost();
+    drag = null;
+
+    if (dest) {
+      applyMove(from, dest);
+    } else {
+      clearFeedback();
+      render();
+    }
+  }
+
+  function handleCellTap(cellEl) {
+    if (!selected) return;
+    var frame = +cellEl.dataset.frame;
+    var index = +cellEl.dataset.index;
+    if (selected.frame === frame && selected.index === index) return;
+    var dest = resolveTarget(frame, index, true);
+    if (dest) applyMove(selected, dest);
+  }
+
+  // ---------- 其他 ----------
+  function init() {
+    buildFrames();
+
+    currentA = 7;
+    currentB = 6;
+    resetToCurrent();
+    renderScore(false);
+
+    // 用 pointerdown 統一處理，document 層攔截
+    document.addEventListener('pointerdown', onPointerDown, { passive: false });
+
+    // 圓點上長按不要彈出選單
+    document.addEventListener('contextmenu', function (e) {
+      if (e.target && e.target.closest && e.target.closest('.dot')) e.preventDefault();
+    });
+
+    // 避免拖曳時頁面慣性捲動
+    document.addEventListener('touchmove', function (e) {
+      if (drag) e.preventDefault();
+    }, { passive: false });
+
+    // iOS：讓 :active / 觸控反應更即時
+    document.addEventListener('touchstart', function () {}, { passive: true });
+
+    resetBtn.addEventListener('click', function () {
+      cancelAutoNext();
+      resetToCurrent();
+    });
+    newQuestionBtn.addEventListener('click', function () {
+      cancelAutoNext();
+      generateNewQuestion();
+    });
+    scoreResetBtn.addEventListener('click', function () {
+      resetScore();
+      clearFeedback();
+      feedbackEl.textContent = '⭐ 分數已歸零，重新出發！';
+      feedbackEl.classList.remove('wrong', 'success');
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
     init();
-  })();
+  }
+})();
 </script>
 </body>
 </html>
