@@ -377,7 +377,7 @@ body::before{
       <div>消除 <b id="rClear">0</b> / 25 格</div>
       <div>錯誤 <b id="rMiss">0</b> 次</div>
       <div>最高連擊 <b id="rCombo">0</b></div>
-      <div>剩餘時間 <b id="rTime">0:00</b></div>
+      <div>用時 <b id="rTime">0:00</b></div>
     </div>
     <button class="big-btn" id="btnAgain">再玩一次</button>
     <button class="big-btn alt" id="btnSwitch">試試另一種難度</button>
@@ -864,11 +864,13 @@ body::before{
     stopTimer();
     var cleared = TOTAL - S.left;
     var stars = won ? 3 : (cleared >= 18 ? 2 : (cleared >= 10 ? 1 : 0));
-    /* 追蹤：一局只送一筆「最後答對幾題」，不需要逐題記錄 */
+    var usedSec = Math.min(TIME_LIMIT, Math.max(0, TIME_LIMIT - Math.round(S.tLeft)));
+    S.usedSec = usedSec;
+    /* 追蹤：一局只送一筆「最後答對幾題 + 用時」，不需要逐題記錄 */
     if (!S.reported) {
       S.reported = true;
       TD('成績', '答對 ' + cleared + ' 題',
-         stars + ' 星 · ' + (won ? '全部消除' : '時間到') + ' · ' + S.diff.label);
+         stars + ' 星 · ' + (won ? '全部消除' : '時間到') + ' · ' + S.diff.label + ' · 用時 ' + usedSec + ' 秒');
     }
     var box = document.getElementById('stars');
     box.innerHTML = '';
@@ -882,7 +884,7 @@ body::before{
     document.getElementById('rClear').textContent = cleared;
     document.getElementById('rMiss').textContent = S.miss;
     document.getElementById('rCombo').textContent = S.bestCombo;
-    document.getElementById('rTime').textContent = fmt(S.tLeft);
+    document.getElementById('rTime').textContent = fmt(usedSec) + '（' + usedSec + ' 秒）';
     elEnd.hidden = false;
     if (won) { sfxWin(); confetti(45); }
     else { sfxTimeUp(); confetti(10); }
