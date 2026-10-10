@@ -200,9 +200,147 @@ body::before{
   animation:toastIn 1.6s ease forwards; pointer-events:none; white-space:nowrap;
 }
 @keyframes toastIn{ 0%{opacity:0; transform:translate(-50%,-14px)} 15%{opacity:1; transform:translate(-50%,0)} 80%{opacity:1} 100%{opacity:0; transform:translate(-50%,-14px)} }
+
+/* ---------------- 開場資料卡 ---------------- */
+.smask{
+  position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center;
+  padding:18px; background:rgba(18,40,26,.62); backdrop-filter:blur(3px);
+}
+.smask[hidden]{ display:none; }
+.scard{
+  width:min(420px,100%); background:linear-gradient(180deg,#ffffff,#eef9e6);
+  border:3px solid #2f6b45; border-radius:22px; padding:22px 20px 18px;
+  box-shadow:0 18px 46px rgba(0,0,0,.38); text-align:center;
+  animation:popIn .32s ease;
+}
+@keyframes popIn{ from{ opacity:0; transform:scale(.9) translateY(14px); } to{ opacity:1; transform:none; } }
+.stitle{ font-size:clamp(22px,5.2vw,30px); font-weight:900; color:#22563a; letter-spacing:1px; }
+.ssub{ margin-top:4px; font-size:clamp(12px,2.7vw,15px); color:#5b7a66; font-weight:700; }
+.srow{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin-top:12px; font-size:clamp(15px,3.4vw,18px); font-weight:900; color:#2f5b43;
+}
+.srow input{
+  width:130px; padding:9px 12px; font-size:clamp(15px,3.4vw,18px); font-weight:900;
+  text-align:center; color:#22423a; border:2.5px solid #9ec9a4; border-radius:12px;
+  background:#fff; -webkit-user-select:text; user-select:text;
+}
+.srow input:focus{ outline:none; border-color:#3f8f5c; box-shadow:0 0 0 3px rgba(63,143,92,.2); }
+.snote{ margin-top:12px; font-size:clamp(10px,2.3vw,12px); color:#7e968a; line-height:1.4; }
+.spick{ margin-top:6px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+.spick button{
+  font:inherit; font-weight:900; font-size:clamp(13px,3vw,16px);
+  padding:7px 14px; border-radius:999px; border:2.5px solid #9ec9a4; background:#fff; color:#2f5b43;
+}
+.spick button[aria-pressed="true"]{ background:#3f8f5c; border-color:#2f5b43; color:#fff; }
+.sgo{ margin-top:16px; width:100%; }
 </style>
+
+<!-- ==================================================================
+     課件使用追蹤（匿名）
+     設計原則：無 cookie、無 localStorage、不記錄 IP、不做行為錄影。
+     只記錄：班別／座號（學生自己輸入）、題目、答對或答錯、點錯了甚麼、
+             用了第幾級提示、用時、結果。
+     不想用？把下面整個追蹤程式區塊（到下一個結束標籤為止）刪掉即可，遊戲照常運作。
+     >>> 唯一要改的一行：把 ENDPOINT 引號內換成你的 Apps Script /exec 網址 <<<
+     ================================================================== -->
+<script>
+(function () {
+  "use strict";
+  var ENDPOINT = "https://script.google.com/macros/s/AKfycbxr_1lCvLGnHn5Y86c_mu_6N_SFwK_b3n5Q_QXb1N1Wcb6oLABXIQyBqzUg6dlKXDug/exec";
+  var APP_VERSION = "1.0";
+
+  /* 尊重私隱選擇 */
+  if (navigator.doNotTrack === "1" || navigator.doNotTrack === "yes") return;
+  if (navigator.globalPrivacyControl === true) return;
+  if (/[?&]notrack=1/.test(location.search)) return;
+
+  var TOKEN = "";
+  try {
+    var qs = new URLSearchParams(location.search);
+    TOKEN = (qs.get("id") || qs.get("u") || qs.get("stu") || "").slice(0, 40);
+  } catch (e) {}
+
+  var SID = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  var tags = {};
+
+  function devLabel() {
+    var ua = navigator.userAgent || "";
+    return /iPad|Tablet|Silk/i.test(ua) ? "平板" : /Mobi|Android|iPhone|iPod/i.test(ua) ? "手機" : "電腦";
+  }
+  function vwBucket() {
+    var w = window.innerWidth || 0;
+    return w < 600 ? "窄(<600)" : w < 1024 ? "中(600-1024)" : "寬(>1024)";
+  }
+  function refHost() {
+    try { return document.referrer ? new URL(document.referrer).hostname : ""; } catch (e) { return ""; }
+  }
+  function send(p) {
+    p.ts = new Date().toISOString();
+    p.v = APP_VERSION;
+    if (!ENDPOINT) {
+      /* 未填 ENDPOINT 時，把記錄暫存在 window.__track，方便在 Console 檢查格式 */
+      try {
+        if (!window.__track) { window.__track = []; }
+        window.__track.push(p);
+        if (window.__track.length > 300) { window.__track.shift(); }
+      } catch (e) {}
+      return;
+    }
+    var body = JSON.stringify(p);
+    try {
+      if (navigator.sendBeacon &&
+          navigator.sendBeacon(ENDPOINT, new Blob([body], { type: "text/plain;charset=UTF-8" }))) { return; }
+    } catch (e) {}
+    try {
+      fetch(ENDPOINT, {
+        method: "POST", mode: "no-cors", keepalive: true,
+        headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: body
+      });
+    } catch (e) {}
+  }
+  function base() {
+    var p = {
+      id: TOKEN, sid: SID, page: location.pathname,
+      title: (document.title || "").slice(0, 80),
+      ref: refHost(), dev: devLabel(), vw: vwBucket(), lang: navigator.language || ""
+    };
+    for (var k in tags) { if (Object.prototype.hasOwnProperty.call(tags, k)) p["tag_" + k] = tags[k]; }
+    return p;
+  }
+  function extend(a, b) { for (var k in b) { if (Object.prototype.hasOwnProperty.call(b, k)) a[k] = b[k]; } return a; }
+
+  window.track = {
+    event: function (name, value, detail) {
+      send(extend(base(), {
+        event: String(name == null ? "" : name).slice(0, 40),
+        value: value == null ? "" : String(value).slice(0, 60),
+        detail: detail == null ? "" : String(detail).slice(0, 60)
+      }));
+    },
+    quiz: function (qid, correct) { window.track.event("quiz", qid, correct ? "正確" : "錯誤"); },
+    setTag: function (key, value) { tags[String(key).slice(0, 20)] = String(value).slice(0, 30); },
+    token: TOKEN,
+    session: SID,
+    ready: !!ENDPOINT
+  };
+})();
+</script>
 </head>
 <body>
+
+<!-- 開場資料卡：填班別／座號（可用 ?id= 專屬連結自動跳過） -->
+<div class="smask" id="startMask">
+  <div class="scard">
+    <div class="stitle">加法消消樂</div>
+    <div class="ssub">18 以內加法 · 5 分鐘挑戰</div>
+    <label class="srow">班別 <input id="inClass" type="text" maxlength="6" placeholder="6A" autocomplete="off"></label>
+    <label class="srow">座號 <input id="inNo" type="text" inputmode="numeric" maxlength="3" placeholder="12" autocomplete="off"></label>
+    <div class="sgo"><button class="big-btn" id="btnStart">開始挑戰</button></div>
+    <div class="snote">只會記錄答題表現（答對／答錯／用了提示），<br>不收集姓名、不記錄 IP。</div>
+  </div>
+</div>
+
 <div id="app">
 
   <header id="hud">
@@ -270,6 +408,7 @@ body::before{
     left: TOTAL,
     combo: 0, bestCombo: 0, miss: 0,
     tries: 0, cur: null,
+    qNo: 0, gameNo: 0, qStart: 0,
     busy: false, over: false,
     tLeft: TIME_LIMIT, endsAt: 0, timerId: 0, lastBeep: -1,
     counted: 0,
@@ -281,6 +420,19 @@ body::before{
      ========================================================= */
   function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+  /* 追蹤：即使追蹤腳本被刪掉或載入失敗，都唔會影響遊戲 */
+  function TD(ev, val, det) {
+    try { if (window.track && window.track.event) { window.track.event(ev, val, det); } } catch (e) {}
+  }
+  function qLabel() {
+    if (!S.cur) return '第' + S.qNo + '題';
+    return '第' + S.qNo + '題 ' + S.cur.a + '+' + S.cur.b + '=?';
+  }
+  function qSecs() {
+    return S.qStart ? Math.max(0, Math.round((Date.now() - S.qStart) / 1000)) : 0;
+  }
+
   function fmt(sec) {
     if (sec < 0) sec = 0;
     var m = Math.floor(sec / 60), s = sec % 60;
@@ -424,6 +576,8 @@ body::before{
     if (!q) { endGame(true); return; }
     S.cur = q;
     S.tries = 0;
+    S.qNo++;
+    S.qStart = Date.now();
     S.busy = false;
     elQText.textContent = q.text;
     elQText.className = '';
@@ -444,10 +598,11 @@ body::before{
     var i = parseInt(b.dataset.idx, 10);
     if (S.busy || S.over || S.cleared[i]) return;
     if (S.board[i] === S.cur.ans) { correct(b, i); }
-    else { wrong(b); }
+    else { wrong(b, i); }
   }
 
   function correct(b, i) {
+    TD('答對', qLabel(), (S.tries === 0 ? '一次答對' : '答錯' + S.tries + '次後答對') + '，用 ' + qSecs() + ' 秒');
     S.busy = true;
     S.cleared[i] = true;
     S.left--;
@@ -479,9 +634,14 @@ body::before{
     }, 600);
   }
 
-  function wrong(b) {
+  function wrong(b, i) {
     S.tries++;
     S.miss++;
+    var picked = (i != null && S.board[i] != null) ? S.board[i] : '?';
+    var gap = (picked === '?') ? '' : (picked > S.cur.ans
+      ? '（大了 ' + (picked - S.cur.ans) + '）' : '（小了 ' + (S.cur.ans - picked) + '）');
+    TD('答錯', qLabel() + ' 正確答案 ' + S.cur.ans,
+       '點了 ' + picked + gap + '，用 ' + qSecs() + ' 秒');
     S.combo = 0;
     sfxWrong();
     b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
@@ -583,6 +743,7 @@ body::before{
   }
 
   function showHint(level) {
+    TD('用提示', qLabel(), '第 ' + level + ' 級提示');
     var q = S.cur, html = buildCard();
     if (level === 1) {
       html += '<div class="hint-txt">👆 把圖畫逐個點一下數一數，然後在盤面點出那個數字。</div>';
@@ -695,6 +856,8 @@ body::before{
      12. 開局 / 結算
      ========================================================= */
   function newGame(quiet) {
+    S.gameNo++; S.qNo = 0; S.qStart = 0;
+    TD('開始新局', S.diff.label, '第 ' + S.gameNo + ' 局 · 限時 5 分鐘');
     S.board = genBoard();
     S.cleared = [];
     for (var i = 0; i < TOTAL; i++) { S.cleared.push(false); }
@@ -716,6 +879,9 @@ body::before{
     stopTimer();
     var cleared = TOTAL - S.left;
     var stars = won ? 3 : (cleared >= 18 ? 2 : (cleared >= 10 ? 1 : 0));
+    TD(won ? '全部消除' : '時間到',
+       S.diff.label + ' · 消 ' + cleared + '/25 格 · ' + stars + ' 星',
+       '錯 ' + S.miss + ' 次 · 最高連擊 ' + S.bestCombo + ' · 剩 ' + fmt(S.tLeft));
     var box = document.getElementById('stars');
     box.innerHTML = '';
     for (var i = 0; i < 3; i++) {
@@ -756,6 +922,7 @@ body::before{
   elBtnDiff.addEventListener('click', function () {
     var next = S.diff.key === 'hard' ? DIFFS.easy : DIFFS.hard;
     if (!window.confirm('切換到「' + next.label + '」（' + next.desc + '），會重新開始一局。')) { return; }
+    TD('切換難度', next.label, next.desc);
     S.diff = next;
     elBtnDiff.textContent = next.label;
     newGame(true);
@@ -765,6 +932,7 @@ body::before{
   document.getElementById('btnAgain').addEventListener('click', function () { newGame(true); });
   document.getElementById('btnSwitch').addEventListener('click', function () {
     S.diff = S.diff.key === 'hard' ? DIFFS.easy : DIFFS.hard;
+    TD('切換難度', S.diff.label, '由結算畫面切換');
     elBtnDiff.textContent = S.diff.label;
     newGame(true);
   });
@@ -776,7 +944,38 @@ body::before{
      ========================================================= */
   elMascot.innerHTML = mascotSVG();
   elBtnDiff.textContent = S.diff.label;
-  newGame(false);
+
+  function boot(cls, no, mode) {
+    try {
+      if (window.track && window.track.setTag) {
+        if (cls) { window.track.setTag('班別', cls); }
+        if (no) { window.track.setTag('座號', no); }
+      }
+    } catch (e) {}
+    TD('開啟遊戲', S.diff.label + (mode === 'link' ? ' · 專屬連結' : ''),
+       '限時 5 分鐘 · 25 格 · ' + (cls || '未填班別') + (no ? ' ' + no + ' 號' : ''));
+    newGame(false);
+  }
+
+  var linkId = '';
+  try { linkId = (new URLSearchParams(location.search).get('id') || '').trim(); } catch (e) {}
+  var elMask = document.getElementById('startMask');
+
+  if (linkId) {
+    /* 由專屬連結開啟 → 連結本身就係身份，唔需要填資料 */
+    if (elMask) { elMask.hidden = true; }
+    boot('', '', 'link');
+  } else {
+    var inClass = document.getElementById('inClass');
+    var inNo = document.getElementById('inNo');
+    function startByForm() {
+      elMask.hidden = true;
+      boot((inClass.value || '').trim(), (inNo.value || '').trim(), 'form');
+    }
+    document.getElementById('btnStart').addEventListener('click', startByForm);
+    inNo.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { startByForm(); } });
+    inClass.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { startByForm(); } });
+  }
 })();
 </script>
 </body>
