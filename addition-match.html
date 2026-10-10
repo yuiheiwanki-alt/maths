@@ -239,8 +239,7 @@ body::before{
 <!-- ==================================================================
      課件使用追蹤（匿名）
      設計原則：無 cookie、無 localStorage、不記錄 IP、不做行為錄影。
-     只記錄：班別／座號（學生自己輸入）、題目、答對或答錯、點錯了甚麼、
-             用了第幾級提示、用時、結果。
+     只記錄：班別／座號（學生自己輸入）＋ 答對了幾題。
      不想用？把下面整個追蹤程式區塊（到下一個結束標籤為止）刪掉即可，遊戲照常運作。
      >>> 唯一要改的一行：把 ENDPOINT 引號內換成你的 Apps Script /exec 網址 <<<
      ================================================================== -->
@@ -337,7 +336,7 @@ body::before{
     <label class="srow">班別 <input id="inClass" type="text" maxlength="6" placeholder="6A" autocomplete="off"></label>
     <label class="srow">座號 <input id="inNo" type="text" inputmode="numeric" maxlength="3" placeholder="12" autocomplete="off"></label>
     <div class="sgo"><button class="big-btn" id="btnStart">開始挑戰</button></div>
-    <div class="snote">只會記錄答題表現（答對／答錯／用了提示），<br>不收集姓名、不記錄 IP。</div>
+    <div class="snote">只會記錄你答對了幾題，<br>不收集姓名、不記錄 IP。</div>
   </div>
 </div>
 
@@ -411,7 +410,7 @@ body::before{
     qNo: 0, gameNo: 0, qStart: 0,
     busy: false, over: false,
     tLeft: TIME_LIMIT, endsAt: 0, timerId: 0, lastBeep: -1,
-    counted: 0,
+    counted: 0, reported: true,   /* reported: 本局成績是否已送出（每局只送一次） */
     sound: true, recent: []
   };
 
@@ -424,13 +423,6 @@ body::before{
   /* 追蹤：即使追蹤腳本被刪掉或載入失敗，都唔會影響遊戲 */
   function TD(ev, val, det) {
     try { if (window.track && window.track.event) { window.track.event(ev, val, det); } } catch (e) {}
-  }
-  function qLabel() {
-    if (!S.cur) return '第' + S.qNo + '題';
-    return '第' + S.qNo + '題 ' + S.cur.a + '+' + S.cur.b + '=?';
-  }
-  function qSecs() {
-    return S.qStart ? Math.max(0, Math.round((Date.now() - S.qStart) / 1000)) : 0;
   }
 
   function fmt(sec) {
@@ -602,7 +594,6 @@ body::before{
   }
 
   function correct(b, i) {
-    TD('答對', qLabel(), (S.tries === 0 ? '一次答對' : '答錯' + S.tries + '次後答對') + '，用 ' + qSecs() + ' 秒');
     S.busy = true;
     S.cleared[i] = true;
     S.left--;
@@ -637,11 +628,6 @@ body::before{
   function wrong(b, i) {
     S.tries++;
     S.miss++;
-    var picked = (i != null && S.board[i] != null) ? S.board[i] : '?';
-    var gap = (picked === '?') ? '' : (picked > S.cur.ans
-      ? '（大了 ' + (picked - S.cur.ans) + '）' : '（小了 ' + (S.cur.ans - picked) + '）');
-    TD('答錯', qLabel() + ' 正確答案 ' + S.cur.ans,
-       '點了 ' + picked + gap + '，用 ' + qSecs() + ' 秒');
     S.combo = 0;
     sfxWrong();
     b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
@@ -743,7 +729,6 @@ body::before{
   }
 
   function showHint(level) {
-    TD('用提示', qLabel(), '第 ' + level + ' 級提示');
     var q = S.cur, html = buildCard();
     if (level === 1) {
       html += '<div class="hint-txt">👆 把圖畫逐個點一下數一數，然後在盤面點出那個數字。</div>';
@@ -857,7 +842,7 @@ body::before{
      ========================================================= */
   function newGame(quiet) {
     S.gameNo++; S.qNo = 0; S.qStart = 0;
-    TD('開始新局', S.diff.label, '第 ' + S.gameNo + ' 局 · 限時 5 分鐘');
+    S.reported = false;
     S.board = genBoard();
     S.cleared = [];
     for (var i = 0; i < TOTAL; i++) { S.cleared.push(false); }
@@ -879,9 +864,12 @@ body::before{
     stopTimer();
     var cleared = TOTAL - S.left;
     var stars = won ? 3 : (cleared >= 18 ? 2 : (cleared >= 10 ? 1 : 0));
-    TD(won ? '全部消除' : '時間到',
-       S.diff.label + ' · 消 ' + cleared + '/25 格 · ' + stars + ' 星',
-       '錯 ' + S.miss + ' 次 · 最高連擊 ' + S.bestCombo + ' · 剩 ' + fmt(S.tLeft));
+    /* 追蹤：一局只送一筆「最後答對幾題」，不需要逐題記錄 */
+    if (!S.reported) {
+      S.reported = true;
+      TD('成績', '答對 ' + cleared + ' 題',
+         stars + ' 星 · ' + (won ? '全部消除' : '時間到') + ' · ' + S.diff.label);
+    }
     var box = document.getElementById('stars');
     box.innerHTML = '';
     for (var i = 0; i < 3; i++) {
@@ -922,7 +910,6 @@ body::before{
   elBtnDiff.addEventListener('click', function () {
     var next = S.diff.key === 'hard' ? DIFFS.easy : DIFFS.hard;
     if (!window.confirm('切換到「' + next.label + '」（' + next.desc + '），會重新開始一局。')) { return; }
-    TD('切換難度', next.label, next.desc);
     S.diff = next;
     elBtnDiff.textContent = next.label;
     newGame(true);
@@ -932,7 +919,6 @@ body::before{
   document.getElementById('btnAgain').addEventListener('click', function () { newGame(true); });
   document.getElementById('btnSwitch').addEventListener('click', function () {
     S.diff = S.diff.key === 'hard' ? DIFFS.easy : DIFFS.hard;
-    TD('切換難度', S.diff.label, '由結算畫面切換');
     elBtnDiff.textContent = S.diff.label;
     newGame(true);
   });
@@ -952,8 +938,6 @@ body::before{
         if (no) { window.track.setTag('座號', no); }
       }
     } catch (e) {}
-    TD('開啟遊戲', S.diff.label + (mode === 'link' ? ' · 專屬連結' : ''),
-       '限時 5 分鐘 · 25 格 · ' + (cls || '未填班別') + (no ? ' ' + no + ' 號' : ''));
     newGame(false);
   }
 
