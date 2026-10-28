@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>勞動體驗任務</title>
+<style>
+  :root{
+    --bg:#f3f3f3;
+    --paper:#ffffff;
+    --ink:#141414;
+    --muted:#767676;
+    --line:#d4d4d4;
+    --accent:#141414;
+    --accent-dark:#000000;
+    --warn:#5a5a5a;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:940px;margin:0 auto;padding:0 18px 80px}
+
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:16px 0;border-bottom:1px solid var(--line);margin-bottom:26px;
+  }
+  .brand{font-weight:700;letter-spacing:.1em;font-size:15px}
+  .topbar-right{display:flex;align-items:center;gap:14px}
+  .wallet{font-size:13px;color:var(--muted)}
+  .wallet strong{color:var(--accent);font-size:17px;margin:0 2px}
+
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 28px;
+    margin-bottom:20px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+  }
+  h1{font-size:27px;margin:0 0 10px;letter-spacing:.02em}
+  h2{font-size:21px;margin:0 0 14px}
+  h3{font-size:17px;margin:0}
+  .lead{font-size:16px;color:var(--muted);margin:0 0 18px}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+
+  .btn{
+    font:inherit;font-size:15px;
+    padding:11px 22px;border-radius:8px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);cursor:pointer;
+    transition:background .15s,border-color .15s,transform .05s;
+  }
+  .btn:hover{background:#f2f2f2}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.primary:hover{background:var(--accent-dark)}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .btn.small{font-size:13px;padding:7px 16px}
+
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:22px 0}
+  .mini{
+    border:1px solid var(--line);border-radius:9px;padding:16px;background:#fff;
+    display:flex;flex-direction:column;gap:3px;
+  }
+  .mini b{font-size:15px}
+  .mini small{color:var(--muted);font-size:12px}
+  .mini em{font-style:normal;color:var(--accent);font-weight:700;font-size:15px;margin-top:6px}
+  .stars{color:var(--accent);letter-spacing:2px;font-size:14px}
+
+  .notice{
+    background:#f4f4f4;border:1px solid #dddddd;border-radius:9px;
+    padding:16px 20px;margin:22px 0;font-size:14px;
+  }
+  .notice b{display:block;margin-bottom:6px}
+  .notice ul{margin:0;padding-left:20px}
+  .notice li{margin:3px 0}
+
+  .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:20px}
+  .level{
+    border:1px solid var(--line);border-radius:10px;padding:20px;background:#fff;
+    display:flex;flex-direction:column;gap:7px;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .level:hover{border-color:var(--accent);box-shadow:0 3px 12px rgba(0,0,0,.08)}
+  .level.done{opacity:.55}
+  .level .tag{font-size:13px;color:var(--accent);font-weight:600;margin:0}
+  .level .desc{font-size:13.5px;color:var(--muted);margin:0;flex:1}
+  .level .specs{list-style:none;margin:6px 0 12px;padding:0;font-size:13px;color:var(--muted)}
+  .level .specs li{display:flex;justify-content:space-between;border-bottom:1px dotted #e2e2e2;padding:4px 0}
+  .level .specs b{color:var(--ink)}
+
+  .taskbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    background:rgba(243,243,243,.96);
+    backdrop-filter:blur(8px);
+    padding:12px 0;margin-bottom:18px;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .taskbar .pay b{color:var(--accent)}
+  .timer{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;
+    padding:3px 14px;border-radius:7px;background:#e6e6e6;letter-spacing:.05em;
+  }
+  .timer.warn{background:var(--accent);color:#fff}
+  .timer.overtime{background:var(--accent);color:#fff;animation:pulse 1.2s infinite}
+  @keyframes pulse{50%{opacity:.72}}
+
+  .lock-bar{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 18px;margin-bottom:16px;
+    background:#efefef;border:1px solid var(--line);border-radius:8px;
+    font-size:13.5px;color:var(--muted);
+  }
+  .lock-bar b{color:var(--accent)}
+
+  .receipt{
+    background:#fff;
+    border:1px dashed #bdbdbd;
+    border-radius:6px;
+    padding:20px 22px 16px;
+    max-width:560px;margin:0 auto;
+    font-variant-numeric:tabular-nums;
+    box-shadow:inset 0 0 26px rgba(0,0,0,.03);
+  }
+  .r-head{text-align:center;border-bottom:2px solid #1e1e1e;padding-bottom:10px;margin-bottom:6px}
+  .r-shop{font-size:17px;font-weight:700;letter-spacing:.12em}
+  .r-meta{font-size:11.5px;color:var(--muted);margin-top:3px;letter-spacing:.04em}
+  .r-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  .r-table th{
+    font-size:11.5px;color:var(--muted);font-weight:600;text-align:left;
+    padding:6px 4px;border-bottom:1px solid #d8d8d8;letter-spacing:.05em;
+  }
+  .r-table td{padding:7px 4px;border-bottom:1px dotted #e6e6e6;vertical-align:middle}
+  .r-table .r{text-align:right}
+  .r-table .c{text-align:center;color:var(--muted);width:26px}
+  .r-table .mark{width:28px;text-align:center}
+  .r-table input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--accent)}
+  .r-foot{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-top:2px solid #1e1e1e;margin-top:10px;padding-top:10px;font-size:14px;
+  }
+  .r-total{font-size:17px;font-weight:700;letter-spacing:.04em}
+  .r-stamp{
+    text-align:center;color:#b3b3b3;font-size:11px;letter-spacing:.4em;margin-top:10px;
+  }
+
+  .ws-title{font-size:14px;font-weight:700;margin:0 0 4px;letter-spacing:.05em}
+  .ws-sub{font-size:12.5px;color:var(--muted);margin:0 0 16px}
+
+  .entry-table{width:100%;border-collapse:collapse}
+  .entry-table th{
+    font-size:12px;color:var(--muted);text-align:left;font-weight:600;
+    padding:8px;letter-spacing:.05em;border-bottom:1px solid var(--line);
+  }
+  .entry-table td{padding:5px 8px;border-bottom:1px dotted #e6e6e6}
+  .entry-table input[type=text]{
+    font:inherit;font-size:14px;width:100%;
+    padding:9px 11px;border:1px solid var(--line);border-radius:6px;background:#fff;
+  }
+  .entry-table input[type=text]:focus, .total-input:focus, textarea:focus, .pwd-row input:focus{
+    outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent);
+  }
+  .entry-no{width:52px;color:var(--muted);text-align:center}
+  .entry-price{width:150px}
+
+  .total-row{
+    display:flex;justify-content:flex-end;align-items:center;gap:10px;
+    margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);
+    font-weight:700;
+  }
+  .total-input{
+    font:inherit;font-size:17px;font-weight:700;
+    width:150px;padding:9px 12px;text-align:right;
+    border:1px solid var(--line);border-radius:6px;background:#fff;
+    font-variant-numeric:tabular-nums;
+  }
+  .hkd{color:var(--muted);font-weight:600;font-size:14px}
+
+  .calc-wrap{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .calc{
+    width:216px;border:1px solid var(--line);border-radius:9px;
+    padding:11px;background:#f0f0f0;
+  }
+  .calc-screen{
+    background:#1e1e1e;color:#ededed;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    text-align:right;padding:9px 11px;border-radius:5px;font-size:19px;
+    margin-bottom:9px;overflow:hidden;white-space:nowrap;
+  }
+  .calc-keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .calc-keys button{
+    font:inherit;font-size:15px;padding:11px 0;border-radius:5px;
+    border:1px solid var(--line);background:#fff;cursor:pointer;
+    transition:background .12s;
+  }
+  .calc-keys button:hover{background:#e9e9e9}
+  .calc-keys button:active{transform:translateY(1px)}
+  .calc-keys .op{background:#e4e4e4;font-weight:600}
+  .calc-keys .eq{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+
+  .submitbar{
+    display:flex;justify-content:space-between;align-items:center;gap:14px;
+    padding:16px 0 4px;
+  }
+  .hint{font-size:13px;color:var(--muted)}
+
+  .panel{
+    border-radius:10px;padding:22px 24px;margin-bottom:20px;border:1px solid;
+    animation:slideIn .25s ease-out;
+  }
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .panel.reject{background:#f4f4f4;border-color:#c9c9c9}
+  .panel h3{display:flex;align-items:center;gap:8px}
+  .panel ul{margin:10px 0 16px;padding-left:22px;font-size:14px}
+  .panel li{margin:5px 0}
+  .panel .actions{display:flex;gap:10px;flex-wrap:wrap}
+
+  .l1-result{
+    margin-top:24px;border-radius:10px;padding:22px 24px;border:1px solid;
+    animation:slideIn .25s ease-out;
+  }
+  .l1-result.ok{background:#f0f7f1;border-color:#c6dccb}
+  .l1-result.fail{background:#f7f0ef;border-color:#dcc6c2}
+  .l1-result .result-title{
+    font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;margin:0 0 6px;
+  }
+  .l1-result .mark-icon{
+    display:inline-block;width:28px;height:28px;line-height:26px;text-align:center;
+    border-radius:50%;font-size:16px;font-weight:700;
+  }
+  .l1-result.ok .mark-icon{background:#c6dccb;color:#1f5a2e}
+  .l1-result.fail .mark-icon{background:#dcc6c2;color:#6b1f18}
+  .l1-result .errors{
+    margin:12px 0 16px;padding-left:20px;font-size:14px;
+  }
+  .l1-result .errors li{margin:6px 0}
+  .l1-result .pay-msg{
+    font-size:22px;font-weight:800;color:var(--accent);margin:4px 0 0;
+  }
+
+  .result-pass{text-align:center;padding:40px 28px}
+  .big-icon{
+    width:72px;height:72px;line-height:72px;border-radius:50%;
+    background:#ebebeb;color:var(--accent);font-size:36px;font-weight:700;
+    margin:0 auto 16px;
+  }
+  .payout{
+    font-size:44px;font-weight:800;color:var(--accent);
+    margin:18px 0 6px;font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+  }
+  .payout span{font-size:17px;font-weight:600;color:var(--muted);margin-left:6px}
+  .stat-row{
+    display:flex;justify-content:center;gap:44px;flex-wrap:wrap;
+    margin:26px 0;padding:18px 0;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  }
+  .stat-row div{display:flex;flex-direction:column;gap:2px}
+  .stat-row b{font-size:19px;font-variant-numeric:tabular-nums}
+  .stat-row small{font-size:12px;color:var(--muted);letter-spacing:.05em}
+  .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+  .calc-table{width:100%;border-collapse:collapse;margin:18px 0;font-size:15px}
+  .calc-table th{
+    font-size:12px;color:var(--muted);text-align:left;font-weight:600;
+    padding:8px;letter-spacing:.05em;border-bottom:1px solid var(--line);
+  }
+  .calc-table td{padding:12px 8px;border-bottom:1px dotted var(--line)}
+  .calc-table tr.total-row td{
+    border-top:2px solid var(--ink);border-bottom:none;
+    padding-top:16px;font-weight:700;font-size:17px;
+  }
+  .amount{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+  .amount.plus::before{content:'+ '}
+  .amount.minus::before{content:'− '}
+
+  .balance-box{
+    text-align:center;padding:28px 20px;margin-top:20px;
+    border-radius:10px;border:1px solid var(--line);background:#fafafa;
+  }
+  .balance-box.negative{background:#f4f4f4;border-style:dashed}
+  .balance-box .label{font-size:13px;color:var(--muted);letter-spacing:.1em}
+  .balance-box .value{
+    font-size:38px;font-weight:800;font-variant-numeric:tabular-nums;margin:6px 0;
+  }
+  .balance-box .value.neg{color:var(--warn)}
+  .balance-box .note{font-size:13px;color:var(--muted);margin-top:6px}
+
+  .pwd-section{
+    margin-top:24px;padding-top:20px;border-top:1px dashed var(--line);
+  }
+  .pwd-row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .pwd-row input{
+    font:inherit;font-size:17px;font-weight:700;
+    padding:10px 14px;border:1px solid var(--line);border-radius:7px;
+    width:180px;letter-spacing:.35em;text-align:center;
+    background:#fff;font-variant-numeric:tabular-nums;
+  }
+  .pwd-row input:disabled{background:#efefef;color:var(--muted)}
+  .pwd-msg{font-size:13.5px;margin:10px 0 0;min-height:22px}
+  .pwd-msg.ok{color:var(--accent);font-weight:700}
+  .pwd-msg.err{color:var(--warn);font-weight:600}
+
+  .shop-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:14px;margin-top:18px;
+  }
+  .shop-item{
+    border:1px solid var(--line);border-radius:10px;padding:18px;
+    background:#fff;display:flex;flex-direction:column;gap:8px;
+  }
+  .shop-item.owned{background:#f4f4f4;border-style:dashed}
+  .shop-item .name{font-weight:700;font-size:15px}
+  .shop-item .price{
+    font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;
+    margin-top:auto;
+  }
+  .shop-item .price small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
+  .shop-item .btn{margin-top:8px}
+  .shop-item.owned .price{color:var(--muted)}
+  .shop-item .owned-tag{
+    font-size:12px;color:var(--muted);letter-spacing:.08em;margin-top:8px;
+  }
+
+  .shop-bar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:16px 20px;border-radius:10px;background:#f4f4f4;
+    border:1px solid var(--line);margin-bottom:18px;gap:12px;flex-wrap:wrap;
+  }
+  .shop-bar .balance{font-size:14px;color:var(--muted)}
+  .shop-bar .balance b{font-size:22px;color:var(--accent);margin:0 4px;font-variant-numeric:tabular-nums}
+
+  .reflect-q{margin-bottom:22px}
+  .reflect-q label{display:block;font-size:14.5px;font-weight:600;margin-bottom:7px}
+  textarea{
+    font:inherit;font-size:14px;width:100%;min-height:88px;resize:vertical;
+    padding:11px 13px;border:1px solid var(--line);border-radius:7px;background:#fff;
+  }
+  .thanks{text-align:center;padding:44px 28px}
+  .thanks .big-icon{background:#ebebeb}
+
+  @media (max-width:600px){
+    .card{padding:20px 18px}
+    .receipt{padding:16px 14px}
+    .r-table{font-size:13px}
+    .stat-row{gap:26px}
+    .calc-wrap{justify-content:center}
+    .balance-box .value{font-size:30px}
+    .topbar-right{gap:8px}
+    .entry-price{width:110px}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">勞 動 體 驗 任 務</div>
+    <div class="topbar-right">
+      <div class="wallet">收入 <strong id="wallet">0</strong> 元</div>
+    </div>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+/* =========================================================
+   設定
+   ========================================================= */
+const LEVEL_TIME_MS = 10 * 60 * 1000;
+const SHOP_PASSWORD = '1697';
+
+const LEVELS = [
+  {
+    id: 1,
+    stars: '★',
+    name: '基礎輸入員',
+    tagline: '純體力與細心度',
+    desc: '把收據上 5 項商品的名稱與價格，逐字逐項輸入電腦，並算出總額。電腦即時核對；有錯即整張重做。',
+    instruction: '任務內容：把下方收據的 5 項商品名稱與價格，<b>一字不漏</b>逐字輸入工作區，並自行計算總額。提交後電腦會即時核對；<b>有錯就要整張重做</b>，全部正確才獲薪金。',
+    payPerSheet: 10,
+    receipt: {
+      shop: '文 具 小 舖',
+      meta: '日期：2026-10-23　　單號：A-{sheet}　　收銀員：李',
+      lines: [
+        { no:1, name:'鉛筆',    detail:'', amount: 5.00 },
+        { no:2, name:'擦膠',    detail:'', amount: 3.50 },
+        { no:3, name:'筆記本',  detail:'', amount: 12.00 },
+        { no:4, name:'間尺',    detail:'', amount: 4.50 },
+        { no:5, name:'文件夾',  detail:'', amount: 7.00 }
+      ],
+      showTotal: false
+    },
+    answer: { total: 32.00 }
+  },
+  {
+    id: 2,
+    stars: '★★',
+    name: '進階核算員',
+    tagline: '工具運用與時間壓力',
+    desc: '13 項商品的長收據。不需抄寫，但必須用計算機快速而準確地加總所有款項。',
+    instruction: '任務內容：下方是一張 13 項商品的長收據。請使用計算機把所有金額加總，填上正確總額。項目多，容易按錯，請小心。',
+    payPerSheet: 15,
+    receipt: {
+      shop: '好 運 超 級 市 場',
+      meta: '日期：2026-10-23　　單號：B-{sheet}　　收銀員：陳',
+      lines: [
+        { no:1,  name:'牛奶 250ml',    detail:'2 × 7.90',  amount: 15.80 },
+        { no:2,  name:'白麵包',        detail:'1 × 12.50', amount: 12.50 },
+        { no:3,  name:'雞蛋 10 隻',    detail:'1 × 23.80', amount: 23.80 },
+        { no:4,  name:'米 5kg',        detail:'1 × 58.00', amount: 58.00 },
+        { no:5,  name:'食用油 900ml',  detail:'1 × 32.40', amount: 32.40 },
+        { no:6,  name:'鹽',            detail:'1 × 4.20',  amount:  4.20 },
+        { no:7,  name:'糖 1kg',        detail:'1 × 9.90',  amount:  9.90 },
+        { no:8,  name:'即食麵 5 包裝', detail:'1 × 18.60', amount: 18.60 },
+        { no:9,  name:'礦泉水 1.5L',   detail:'3 × 5.50',  amount: 16.50 },
+        { no:10, name:'洗潔精 500ml',  detail:'1 × 16.90', amount: 16.90 },
+        { no:11, name:'牙膏',          detail:'1 × 21.30', amount: 21.30 },
+        { no:12, name:'廁紙 10 卷',    detail:'1 × 42.70', amount: 42.70 },
+        { no:13, name:'垃圾袋',        detail:'1 × 13.80', amount: 13.80 }
+      ],
+      showTotal: false
+    },
+    answer: { total: 286.40 }
+  },
+  {
+    id: 3,
+    stars: '★★★',
+    name: '高級審核員',
+    tagline: '問題解決與判斷力',
+    desc: '一張 14 項收據，總額已算好，但暗藏 3 個錯誤：重複收費、贈品被收費、折扣方向錯誤。你需要找出它們，並算出正確總額。',
+    instruction: '任務內容：這張收據的總額已經算好了，但當中有 3 個錯誤。請逐行核對「數量 × 單價」是否等於「金額」，並特別留意：同一商品是否重複收費、贈品是否被收費、折扣是否被正確處理（折扣應減不應加）。勾選所有你認為有問題的行，然後寫出正確的總金額。',
+    payPerSheet: 20,
+    receipt: {
+      shop: '好 運 超 級 市 場',
+      meta: '日期：2026-10-23　　單號：C-{sheet}　　收銀員：黃',
+      lines: [
+        { no:1,  name:'泰國香米 5kg',     detail:'2 包 × 58.00', amount: 116.00 },
+        { no:2,  name:'雞蛋 10 隻',        detail:'1 盒 × 23.80', amount:  23.80 },
+        { no:3,  name:'牛奶 250ml',        detail:'4 盒 × 7.90',  amount:  31.60 },
+        { no:4,  name:'可樂 330ml',        detail:'2 罐 × 5.50',  amount:  11.00 },
+        { no:5,  name:'白麵包',            detail:'1 個 × 12.50', amount:  12.50 },
+        { no:6,  name:'廁紙 10 卷',        detail:'1 包 × 42.70', amount:  42.70 },
+        { no:7,  name:'廁紙 10 卷',        detail:'1 包 × 42.70', amount:  42.70 },
+        { no:8,  name:'洗潔精 500ml',      detail:'1 瓶 × 16.90', amount:  16.90 },
+        { no:9,  name:'牙膏',              detail:'1 支 × 21.30', amount:  21.30 },
+        { no:10, name:'沐浴露 750ml',      detail:'1 瓶 × 35.60', amount:  35.60 },
+        { no:11, name:'醬油 500ml（贈品）', detail:'1 瓶 × 0.00',  amount:   8.50 },
+        { no:12, name:'會員折扣 95 折',     detail:'',             amount:  15.00 },
+        { no:13, name:'膠袋徵費',          detail:'1 個',          amount:   1.00 },
+        { no:14, name:'餅乾 200g',         detail:'1 包 × 12.80', amount:  12.80 }
+      ],
+      showTotal: true,
+      total: 391.40
+    },
+    answer: {
+      mustMark: [7, 11, 12],
+      allowMark: [],
+      forbidden: [1,2,3,4,5,6,8,9,10,13,14],
+      total: 310.20
+    }
+  }
+];
+
+const LIVING_COSTS = [
+  { name:'食', detail:'每日三餐 × 5 日', amount: 80 },
+  { name:'住', detail:'租金及水電 × 5 日', amount: 70 },
+  { name:'衣', detail:'基本衣物', amount: 50 }
+];
+const LIVING_TOTAL = LIVING_COSTS.reduce((s, c) => s + c.amount, 0);
+
+const SHOP_ITEMS = [
+  { id:'tea',    name:'一杯珍奶',       price: 30  },
+  { id:'movie',  name:'看一場電影',     price: 60  },
+  { id:'game',   name:'遊戲點數',       price: 80  },
+  { id:'jacket', name:'想要的外套',     price: 150 },
+  { id:'shoes',  name:'一雙球鞋',       price: 280 },
+  { id:'concert',name:'演唱會門票',     price: 400 }
+];
+
+/* =========================================================
+   狀態
+   ========================================================= */
+const S = {
+  screen: 'home',
+  levelId: null,
+  sheetIndex: 1,
+  attempts: 0,
+  earnings: 0,
+  levelStatus: { 1:'idle', 2:'idle', 3:'idle' },
+  levelEarnings: { 1:0, 2:0, 3:0 },
+  levelSheetsDone: { 1:0, 2:0, 3:0 },
+  currentLevelEarnings: 0,
+  currentLevelSheets: 0,
+  levelDeadline: 0,
+  tickId: null,
+  purchases: [],
+  shopUnlocked: false,
+  reflections: []
+};
+
+const mainEl = document.getElementById('main');
+const walletEl = document.getElementById('wallet');
+
+/* =========================================================
+   工具
+   ========================================================= */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const getLevel = () => LEVELS.find(l => l.id === S.levelId);
+
+function money(n){ return n.toFixed(2); }
+function updateWallet(){ walletEl.textContent = S.earnings; }
+
+function fmtTime(ms){
+  const t = Math.max(0, Math.ceil(ms / 1000));
+  const m = String(Math.floor(t / 60)).padStart(2, '0');
+  const s = String(t % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+/* =========================================================
+   崗位倒數計時
+   ========================================================= */
+function startLevelTimer(){
+  if (S.tickId) clearInterval(S.tickId);
+  S.tickId = setInterval(tickTimer, 200);
+  tickTimer();
+}
+function stopLevelTimer(){
+  if (S.tickId){ clearInterval(S.tickId); S.tickId = null; }
+}
+function tickTimer(){
+  const el = $('#timer');
+  if (!el) return;
+  const remain = S.levelDeadline - Date.now();
+  if (remain <= 0){
+    el.textContent = '00:00';
+    el.classList.add('overtime');
+    stopLevelTimer();
+    if (S.screen === 'task') onLevelTimeUp();
+    return;
+  }
+  el.textContent = fmtTime(remain);
+  el.classList.toggle('warn', remain < 60 * 1000);
+}
+function isLevelTimeUp(){
+  return Date.now() >= S.levelDeadline;
+}
+
+/* =========================================================
+   首頁
+   ========================================================= */
+function renderHome(){
+  S.screen = 'home';
+  mainEl.innerHTML = `
+    <section class="card">
+      <h1>勞動體驗任務</h1>
+      <p class="lead">這不是遊戲。這是一次「真實勞動」的模擬。</p>
+      <p style="margin:0 0 4px">你會收到真實的收據，按難度完成任務。任務要求 <b>一字不漏</b>、<b>一毫不差</b>。任何錯誤都會被退回。</p>
+      <p style="margin:0 0 4px">每完成一張收據，即時按難度發放報酬。<b>選定一個崗位後，你必須在該崗位內待滿 10 分鐘才能結束</b>——時間內完成越多張，收入越高。</p>
+      <p style="margin:0 0 4px">工作結束後，你必須先支付<b>食、住、衣</b>等基本生活開支，剩下的錢——在輸入授權密碼後——才能用來買你想要的東西。</p>
+
+      <div class="grid3">
+        <div class="mini">
+          <span class="stars">★</span>
+          <b>基礎輸入員</b>
+          <small>逐字輸入、電腦即時核對</small>
+          <em>每張 10 元</em>
+        </div>
+        <div class="mini">
+          <span class="stars">★★</span>
+          <b>進階核算員</b>
+          <small>計算機操作、抗壓</small>
+          <em>每張 15 元</em>
+        </div>
+        <div class="mini">
+          <span class="stars">★★★</span>
+          <b>高級審核員</b>
+          <small>14 項收據、3 個隱藏錯誤</small>
+          <em>每張 20 元</em>
+        </div>
+      </div>
+
+      <div class="notice">
+        <b>規則</b>
+        <ul>
+          <li>每個崗位限時 <b>10 分鐘</b>，進入後必須待滿 10 分鐘才能結束。</li>
+          <li>時間內完成一張收據，即時發放報酬（10 / 15 / 20 元）。</li>
+          <li>基礎輸入員：有錯即整張重做，不獲報酬；全部正確才獲薪金。</li>
+          <li>其他崗位：任何一張如被退回並修正後才通過，該張報酬減半。</li>
+          <li>時間到仍未完成的張數，不計報酬。</li>
+          <li>結束後扣除基本生活開支，餘額需<b>輸入授權密碼</b>才能消費。</li>
+        </ul>
+      </div>
+
+      <button class="btn primary" id="startBtn">開始工作</button>
+    </section>
+  `;
+  $('#startBtn').addEventListener('click', renderSelect);
+  updateWallet();
+}
+
+/* =========================================================
+   選關
+   ========================================================= */
+function renderSelect(){
+  S.screen = 'select';
+  const anyDone = Object.values(S.levelStatus).some(v => v === 'done');
+
+  mainEl.innerHTML = `
+    <section class="card">
+      <h2>選擇工作崗位</h2>
+      <p class="muted small" style="margin-top:-8px">選定崗位後，必須在該崗位內待滿 10 分鐘才能結束。時間內完成越多張，收入越高。</p>
+
+      <div class="levels">
+        ${LEVELS.map(lv => {
+          const st = S.levelStatus[lv.id];
+          const done = st === 'done';
+          return `
+            <article class="level ${done ? 'done' : ''}">
+              <div class="stars">${lv.stars}</div>
+              <h3>${lv.name}</h3>
+              <p class="tag">${lv.tagline}</p>
+              <p class="desc">${lv.desc}</p>
+              <ul class="specs">
+                <li><span>單張報酬</span><b>${lv.payPerSheet} 元</b></li>
+                <li><span>工時</span><b>10 分鐘</b></li>
+                <li><span>目前收入</span><b>${S.levelEarnings[lv.id]} 元</b></li>
+                <li><span>完成張數</span><b>${S.levelSheetsDone[lv.id]} 張</b></li>
+              </ul>
+              ${done
+                ? `<button class="btn" disabled>已完成</button>`
+                : `<button class="btn primary" data-pick="${lv.id}">開始這個崗位</button>`
+              }
+            </article>
+          `;
+        }).join('')}
+      </div>
+    </section>
+
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+        <div>
+          <p class="ws-title" style="margin:0 0 4px">目前累計收入</p>
+          <p style="margin:0;font-size:26px;font-weight:800;font-variant-numeric:tabular-nums">${S.earnings} 元</p>
+        </div>
+        <button class="btn primary" id="endWorkBtn" ${anyDone ? '' : 'disabled'}>
+          結束工作，計算生活開支
+        </button>
+      </div>
+      <p class="small muted" style="margin:14px 0 0">
+        ${anyDone
+          ? '你已完成至少一個崗位，可以結束工作。'
+          : '至少完成一個崗位（待滿 10 分鐘）才可以結束工作。'}
+      </p>
+    </section>
+  `;
+
+  $$('[data-pick]').forEach(b =>
+    b.addEventListener('click', () => startLevel(Number(b.dataset.pick)))
+  );
+  $('#endWorkBtn').addEventListener('click', () => {
+    if (!anyDone) return;
+    renderSettle();
+  });
+  updateWallet();
+}
+
+/* =========================================================
+   開始崗位
+   ========================================================= */
+function startLevel(id){
+  S.levelId = id;
+  S.sheetIndex = 1;
+  S.attempts = 0;
+  S.currentLevelEarnings = 0;
+  S.currentLevelSheets = 0;
+  S.levelDeadline = Date.now() + LEVEL_TIME_MS;
+  S.levelStatus[id] = 'active';
+  calcState = { disp: '0', acc: null, op: null, fresh: true };
+  S.screen = 'task';
+  renderTask();
+  startLevelTimer();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+/* =========================================================
+   任務畫面
+   ========================================================= */
+function renderTask(){
+  const lv = getLevel();
+  S.screen = 'task';
+
+  mainEl.innerHTML = `
+    <div class="taskbar">
+      <div><span class="stars">${lv.stars}</span> <b>${lv.name}</b></div>
+      <div class="timer" id="timer">${fmtTime(S.levelDeadline - Date.now())}</div>
+      <div class="pay">本崗位已賺 <b>${S.currentLevelEarnings} 元</b></div>
+    </div>
+
+    <div class="lock-bar">
+      🔒 已選定此崗位，必須待滿 10 分鐘才能結束。時間內完成越多張，收入越高。
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:14px">
+      <span>第 <b>${S.sheetIndex}</b> 張　·　已完成 <b>${S.currentLevelSheets}</b> 張</span>
+      <span class="muted">每張 ${lv.payPerSheet} 元</span>
+    </div>
+
+    <section class="card">
+      <p class="ws-title">收　據</p>
+      <p class="ws-sub">${lv.instruction}</p>
+      <div>${receiptHTML(lv)}</div>
+    </section>
+
+    <section class="card" id="workspace">
+      ${workspaceHTML(lv)}
+    </section>
+
+    <div class="submitbar">
+      <span class="hint" id="hint">提交後不能修改</span>
+      <button class="btn primary" id="submitBtn">提　交</button>
+    </div>
+
+    <div id="resultPanel" hidden></div>
+  `;
+
+  bindWorkspace(lv);
+  $('#submitBtn').addEventListener('click', handleSubmit);
+  updateWallet();
+}
+
+/* ---- 收據 HTML ---- */
+function receiptHTML(lv){
+  const r = lv.receipt;
+  const markable = lv.id === 3;
+  const showDetail = r.lines.some(l => l.detail);
+  const meta = r.meta.replace('{sheet}', String(S.sheetIndex).padStart(2, '0'));
+
+  const rows = r.lines.map(l => `
+    <tr>
+      ${markable ? `<td class="mark"><input type="checkbox" data-l3row="${l.no}" aria-label="標記第 ${l.no} 行"></td>` : ''}
+      <td class="c">${l.no}</td>
+      <td>${l.name}</td>
+      ${showDetail ? `<td class="r">${l.detail || ''}</td>` : ''}
+      <td class="r">${money(l.amount)}</td>
+    </tr>
+  `).join('');
+
+  return `
+    <div class="receipt">
+      <div class="r-head">
+        <div class="r-shop">${r.shop}</div>
+        <div class="r-meta">${meta}</div>
+      </div>
+      <table class="r-table">
+        <thead>
+          <tr>
+            ${markable ? '<th></th>' : ''}
+            <th>#</th>
+            <th>商品</th>
+            ${showDetail ? '<th class="r">數量 × 單價</th>' : ''}
+            <th class="r">金額</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="r-foot">
+        <div class="small muted">項目數：${r.lines.length}</div>
+        ${r.showTotal ? `<div class="r-total">總額　HK$ ${money(r.total)}</div>` : '<div class="small muted">總額：待核算</div>'}
+      </div>
+      <div class="r-stamp">已 付 款</div>
+    </div>
+  `;
+}
+
+/* ---- 工作區 HTML ---- */
+function workspaceHTML(lv){
+  /* ===== 級別一：逐字輸入 + 電腦即時核對 ===== */
+  if (lv.id === 1){
+    const rows = lv.receipt.lines.map((l, i) => `
+      <tr>
+        <td class="entry-no">${l.no}</td>
+        <td><input type="text" data-l1name="${i}" autocomplete="off" spellcheck="false" placeholder="輸入商品名稱"></td>
+        <td class="entry-price">
+          <input type="text" data-l1price="${i}" inputmode="decimal" autocomplete="off" placeholder="0.00" style="text-align:right">
+        </td>
+      </tr>
+    `).join('');
+
+    return `
+      <p class="ws-title">工　作　區</p>
+      <p class="ws-sub">請把上方收據的 5 項商品，逐字逐項輸入下方。名稱要一字不漏，價格要一毫不差。提交後電腦會即時核對；有錯就要整張重做。</p>
+
+      <table class="entry-table">
+        <thead>
+          <tr>
+            <th style="text-align:center">#</th>
+            <th>商品名稱</th>
+            <th style="text-align:right">價格 (HK$)</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+      <div class="total-row">
+        <span>總額</span>
+        <span class="hkd">HK$</span>
+        <input class="total-input" id="l1total" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00">
+      </div>
+    `;
+  }
+
+  if (lv.id === 2){
+    return `
+      <p class="ws-title">核　算　區</p>
+      <p class="ws-sub">使用計算機把上方 13 項金額加總。按錯一鍵，全盤皆錯。</p>
+      <div class="calc-wrap">
+        <div style="flex:1;min-width:200px">
+          <div class="total-row" style="margin-top:0;padding-top:0;border-top:none">
+            <span>總額</span>
+            <span class="hkd">HK$</span>
+            <input class="total-input" id="l2total" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00">
+          </div>
+        </div>
+        ${calcHTML()}
+      </div>
+    `;
+  }
+
+  return `
+    <p class="ws-title">審　核　結　論</p>
+    <p class="ws-sub">在上方收據勾選所有你認為有錯誤的行（可勾多於一行），然後寫出正確的總金額。提示：有 3 個錯誤。</p>
+    <div class="total-row">
+      <span>正確總金額</span>
+      <span class="hkd">HK$</span>
+      <input class="total-input" id="l3total" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00">
+    </div>
+  `;
+}
+
+/* ---- 計算機 ---- */
+function calcHTML(){
+  const keys = ['7','8','9','÷','4','5','6','×','1','2','3','−','0','.','=','+'];
+  return `
+    <div class="calc">
+      <div class="calc-screen" id="calcDisp">0</div>
+      <div class="calc-keys">
+        ${keys.map(k => {
+          let cls = '';
+          if (['÷','×','−','+'].includes(k)) cls = 'op';
+          if (k === '=') cls = 'eq';
+          return `<button type="button" class="${cls}" data-calc="${k}">${k}</button>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+let calcState = { disp: '0', acc: null, op: null, fresh: true };
+
+function calcRender(){
+  const el = $('#calcDisp');
+  if (el) el.textContent = calcState.disp;
+}
+function calcNum(n){
+  if (!isFinite(n)) return 'Error';
+  return String(Math.round(n * 100) / 100);
+}
+function calcApply(a, b, op){
+  switch (op){
+    case '+': return a + b;
+    case '−': return a - b;
+    case '×': return a * b;
+    case '÷': return b === 0 ? NaN : a / b;
+  }
+}
+function calcPress(k){
+  const st = calcState;
+  if (k >= '0' && k <= '9'){
+    st.disp = (st.fresh || st.disp === '0') ? k : st.disp + k;
+    st.fresh = false;
+  } else if (k === '.'){
+    if (st.fresh){ st.disp = '0.'; st.fresh = false; }
+    else if (!st.disp.includes('.')) st.disp += '.';
+  } else if (k === '='){
+    if (st.op !== null && st.acc !== null){
+      st.disp = calcNum(calcApply(st.acc, parseFloat(st.disp), st.op));
+      st.acc = null; st.op = null; st.fresh = true;
+    }
+  } else {
+    const cur = parseFloat(st.disp);
+    if (st.op !== null && st.acc !== null && !st.fresh){
+      const r = calcApply(st.acc, cur, st.op);
+      st.acc = r;
+      st.disp = calcNum(r);
+    } else {
+      st.acc = cur;
+    }
+    st.op = k;
+    st.fresh = true;
+  }
+  calcRender();
+}
+
+/* ---- 綁定 ---- */
+function bindWorkspace(lv){
+  if (lv.id === 1){
+    // 禁止貼上與拖放，強迫逐字輸入；Enter 跳下一格
+    $$('#workspace input[type=text]').forEach(inp => {
+      inp.addEventListener('paste', e => e.preventDefault());
+      inp.addEventListener('drop', e => e.preventDefault());
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter'){
+          const all = $$('#workspace input[type=text]');
+          const idx = all.indexOf(inp);
+          if (idx >= 0 && idx < all.length - 1){
+            all[idx + 1].focus();
+          } else {
+            $('#submitBtn').click();
+          }
+        }
+      });
+    });
+    return;
+  }
+
+  $$('#workspace input[type=text]').forEach(inp => {
+    inp.addEventListener('paste', e => e.preventDefault());
+    inp.addEventListener('drop', e => e.preventDefault());
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') $('#submitBtn').click();
+    });
+  });
+
+  $$('[data-calc]').forEach(btn => {
+    btn.addEventListener('click', () => calcPress(btn.dataset.calc));
+  });
+  calcRender();
+}
+
+/* =========================================================
+   檢查
+   ========================================================= */
+function parseNum(str){
+  if (!str) return NaN;
+  const v = parseFloat(String(str).replace(/[,\s]/g, ''));
+  return isNaN(v) ? NaN : v;
+}
+
+/* 級別一：電腦逐字逐項核對學生輸入的名稱、價格與總額 */
+function checkL1(){
+  const lv = getLevel();
+  const reasons = [];
+
+  lv.receipt.lines.forEach((line, i) => {
+    const nameInp  = $(`[data-l1name="${i}"]`);
+    const priceInp = $(`[data-l1price="${i}"]`);
+    if (!nameInp || !priceInp) return;
+
+    const nameVal  = (nameInp.value || '').trim();
+    const priceVal = (priceInp.value || '').trim();
+
+    if (!nameVal){
+      reasons.push(`第 ${i+1} 項：商品名稱空白`);
+    } else if (nameVal !== line.name){
+      reasons.push(`第 ${i+1} 項：商品名稱錯誤（你輸入了「${nameVal}」，正確是「${line.name}」）`);
+    }
+
+    if (!priceVal){
+      reasons.push(`第 ${i+1} 項：價格空白`);
+    } else {
+      const pv = parseNum(priceVal);
+      if (isNaN(pv)){
+        reasons.push(`第 ${i+1} 項：價格不是有效數字`);
+      } else if (Math.abs(pv - line.amount) > 0.004){
+        reasons.push(`第 ${i+1} 項：價格錯誤（你輸入了 ${pv.toFixed(2)}，正確是 ${money(line.amount)}）`);
+      }
+    }
+  });
+
+  const totalInput = $('#l1total');
+  const t = totalInput ? parseNum(totalInput.value) : NaN;
+  if (isNaN(t)){
+    reasons.push('總額未填寫或不是有效數字');
+  } else if (Math.abs(t - lv.answer.total) > 0.004){
+    reasons.push(`總額錯誤（你輸入了 ${t.toFixed(2)}，正確是 ${money(lv.answer.total)}）`);
+  }
+
+  return { reasons };
+}
+
+function checkL2(){
+  const lv = getLevel();
+  const reasons = [];
+  const t = parseNum($('#l2total').value);
+  if (isNaN(t)) reasons.push('總額未填寫或不是有效數字');
+  else if (Math.abs(t - lv.answer.total) > 0.004)
+    reasons.push('總額不正確，請重新核算（提示：13 個項目，逐項加總）');
+  return { reasons };
+}
+
+function checkL3(){
+  const lv = getLevel();
+  const a = lv.answer;
+  const reasons = [];
+  const checked = $$('[data-l3row]:checked').map(el => Number(el.dataset.l3row));
+  const missing = a.mustMark.filter(n => !checked.includes(n));
+  const wrong   = checked.filter(n => a.forbidden.includes(n));
+
+  if (missing.length){
+    reasons.push(`仍有 ${missing.length} 個錯誤行未被標記（提示：共 3 個錯誤）`);
+  }
+  if (wrong.length){
+    reasons.push(`有 ${wrong.length} 個被標記的行其實沒有錯誤——不要憑感覺勾，要逐行做乘法核對`);
+  }
+
+  const t = parseNum($('#l3total').value);
+  if (isNaN(t)) reasons.push('正確總金額未填寫或不是有效數字');
+  else if (Math.abs(t - a.total) > 0.004) reasons.push('正確總金額不正確（提示：要把 3 個錯誤修正後再加總）');
+  return { reasons };
+}
+
+/* =========================================================
+   提交
+   ========================================================= */
+function handleSubmit(){
+  const lv = getLevel();
+  const btn = $('#submitBtn');
+
+  if (isLevelTimeUp()){ onLevelTimeUp(); return; }
+
+  btn.disabled = true;
+
+  /* ===== 級別一：即時判定，錯則整張重做 ===== */
+  if (lv.id === 1){
+    const res = checkL1();
+
+    if (res.reasons.length === 0){
+      // 全部正確 → 立即發薪金
+      const pay = lv.payPerSheet;
+      S.earnings += pay;
+      S.currentLevelEarnings += pay;
+      S.currentLevelSheets++;
+      updateWallet();
+
+      renderL1Result({ ok: true, pay });
+    } else {
+      // 有錯誤 → 列出錯誤，要求整張重做
+      renderL1Result({ ok: false, errors: res.reasons });
+    }
+    return;
+  }
+
+  /* ===== 級別二、三：維持原本邏輯 ===== */
+  S.attempts++;
+
+  const res = lv.id === 2 ? checkL2() : checkL3();
+
+  if (res.reasons.length === 0){
+    let pay = lv.payPerSheet;
+    if (S.attempts > 1) pay = Math.round(pay / 2);
+
+    S.earnings += pay;
+    S.currentLevelEarnings += pay;
+    S.currentLevelSheets++;
+    updateWallet();
+
+    renderSheetPassed(pay);
+  } else {
+    const canRetry = S.attempts < 2;
+    renderRejected(res.reasons, canRetry);
+  }
+}
+
+/* ===== 級別一：即時判定結果面板 ===== */
+function renderL1Result(opts){
+  const panel = $('#resultPanel');
+
+  if (opts.ok){
+    panel.hidden = false;
+    panel.innerHTML = `
+      <div class="l1-result ok">
+        <p class="result-title">
+          <span class="mark-icon">✓</span>
+          全部正確
+        </p>
+        <p class="small muted" style="margin:0 0 8px">
+          第 ${S.sheetIndex} 張，電腦核對全部正確。
+        </p>
+        <p class="pay-msg">+${opts.pay} 元</p>
+        <p class="small muted" style="margin:6px 0 16px">
+          薪金已即時加入收入。本崗位已累計 <b>${S.currentLevelEarnings} 元</b>，完成 <b>${S.currentLevelSheets}</b> 張。
+        </p>
+        <div class="actions" style="justify-content:flex-start">
+          <button class="btn primary" id="nextSheetBtn">繼續下一張</button>
+        </div>
+      </div>
+    `;
+
+    $('#nextSheetBtn').addEventListener('click', () => {
+      if (isLevelTimeUp()){ onLevelTimeUp(); return; }
+      S.sheetIndex++;
+      S.attempts = 0;
+      panel.hidden = true;
+      panel.innerHTML = '';
+      renderTask();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  } else {
+    panel.hidden = false;
+    panel.innerHTML = `
+      <div class="l1-result fail">
+        <p class="result-title">
+          <span class="mark-icon">✗</span>
+          有錯誤，本張不獲薪金
+        </p>
+        <p class="small muted" style="margin:0 0 4px">
+          以下是錯誤的地方（共 ${opts.errors.length} 項）：
+        </p>
+        <ul class="errors">
+          ${opts.errors.map(e => `<li>${e}</li>`).join('')}
+        </ul>
+        <p class="small muted" style="margin:0 0 16px">
+          這一張不獲薪金。<b>請整張重做</b>：清空所有輸入，重新逐字輸入正確內容。不能只改錯字就重交。
+        </p>
+        <div class="actions" style="justify-content:flex-start">
+          <button class="btn primary" id="redoBtn">重做這一張</button>
+        </div>
+      </div>
+    `;
+
+    $('#redoBtn').addEventListener('click', () => {
+      if (isLevelTimeUp()){ onLevelTimeUp(); return; }
+      S.attempts = 0;
+      panel.hidden = true;
+      panel.innerHTML = '';
+      renderTask();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* ---- 級別二、三：單張通過 ---- */
+function renderSheetPassed(pay){
+  const panel = $('#resultPanel');
+
+  panel.hidden = false;
+  panel.innerHTML = `
+    <div class="panel" style="background:#f4f4f4;border-color:#c9c9c9">
+      <h3 style="color:var(--accent)">✓ 第 ${S.sheetIndex} 張通過　+${pay} 元</h3>
+      <p class="small muted" style="margin:6px 0 16px">
+        核對正確，報酬已即時加入收入。<br>
+        本崗位已累計 <b>${S.currentLevelEarnings} 元</b>，完成 <b>${S.currentLevelSheets}</b> 張。
+      </p>
+      <div class="actions">
+        <button class="btn primary" id="nextSheetBtn">繼續下一張</button>
+      </div>
+    </div>
+  `;
+
+  $('#nextSheetBtn').addEventListener('click', () => {
+    if (isLevelTimeUp()){ onLevelTimeUp(); return; }
+    S.sheetIndex++;
+    S.attempts = 0;
+    panel.hidden = true;
+    panel.innerHTML = '';
+    renderTask();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* ---- 級別二、三：退回 ---- */
+function renderRejected(reasons, canRetry){
+  const panel = $('#resultPanel');
+  const lv = getLevel();
+
+  panel.hidden = false;
+  panel.innerHTML = `
+    <div class="panel reject">
+      <h3>⚠ 第 ${S.sheetIndex} 張被退回</h3>
+      <p class="small" style="margin:0 0 4px">以下是退回原因（共 ${reasons.length} 項）：</p>
+      <ul>${reasons.map(r => `<li>${r}</li>`).join('')}</ul>
+      ${canRetry
+        ? `<p class="small muted" style="margin:0 0 14px">
+             你有一次修正機會。請修正後重新提交。
+             修正通過後，本張報酬由 ${lv.payPerSheet} 元減半為 ${Math.round(lv.payPerSheet/2)} 元。
+           </p>
+           <div class="actions">
+             <button class="btn primary" id="retryBtn">修正後重新提交</button>
+             <button class="btn" id="skipBtn">跳過，做下一張</button>
+           </div>`
+        : `<p class="small muted" style="margin:0 0 14px">本張已用完修正機會，仍未能通過。本張不獲報酬。</p>
+           <div class="actions">
+             <button class="btn primary" id="skipBtn">跳過，做下一張</button>
+           </div>`
+      }
+    </div>
+  `;
+
+  if (canRetry){
+    $('#retryBtn').addEventListener('click', () => {
+      panel.hidden = true;
+      const sb = $('#submitBtn');
+      sb.disabled = false;
+      sb.textContent = '再次提交';
+      panel.innerHTML = '';
+    });
+  }
+
+  $('#skipBtn').addEventListener('click', () => {
+    if (isLevelTimeUp()){ onLevelTimeUp(); return; }
+    S.sheetIndex++;
+    S.attempts = 0;
+    panel.hidden = true;
+    panel.innerHTML = '';
+    renderTask();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* =========================================================
+   崗位時間到 → 自動結束
+   ========================================================= */
+function onLevelTimeUp(){
+  const lv = getLevel();
+  stopLevelTimer();
+  S.levelStatus[lv.id] = 'done';
+  S.levelEarnings[lv.id] = S.currentLevelEarnings;
+  S.levelSheetsDone[lv.id] = S.currentLevelSheets;
+  S.screen = 'done';
+  renderLevelSummary();
+}
+
+function renderLevelSummary(){
+  const lv = getLevel();
+
+  mainEl.innerHTML = `
+    <section class="card result-pass">
+      <div class="big-icon">✓</div>
+      <h2 style="margin-bottom:4px">這個崗位完成</h2>
+      <p class="muted small" style="margin:0">
+        <span class="stars">${lv.stars}</span> ${lv.name}　·　10 分鐘工時已滿
+      </p>
+
+      <div class="payout">+${S.currentLevelEarnings}<span>元</span></div>
+      <p class="small muted" style="margin:0">本崗位 10 分鐘的成果</p>
+
+      <div class="stat-row">
+        <div><b>${S.currentLevelSheets}</b><small>完成張數</small></div>
+        <div><b>${lv.payPerSheet}</b><small>每張報酬</small></div>
+        <div><b>${S.earnings}</b><small>累計收入</small></div>
+      </div>
+
+      <p class="small muted" style="max-width:520px;margin:0 auto 22px">
+        工時已滿 10 分鐘，這個崗位正式結束。<br>
+        你可以選擇其他崗位繼續工作，或結束今天的工作。
+      </p>
+
+      <div class="actions">
+        <button class="btn primary" id="backBtn">返回選關</button>
+        <button class="btn" id="endBtn">結束工作，計算生活開支</button>
+      </div>
+    </section>
+  `;
+
+  $('#backBtn').addEventListener('click', renderSelect);
+  $('#endBtn').addEventListener('click', renderSettle);
+  updateWallet();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* =========================================================
+   生活結算
+   ========================================================= */
+function renderSettle(){
+  S.screen = 'settle';
+  stopLevelTimer();
+
+  const disposable = S.earnings - LIVING_TOTAL;
+
+  mainEl.innerHTML = `
+    <section class="card">
+      <h2>生活結算</h2>
+      <p class="muted small" style="margin-top:-8px">工作結束。先扣除基本生活開支，剩下的才是你能自由支配的錢。</p>
+
+      <table class="calc-table">
+        <thead>
+          <tr><th>項目</th><th>說明</th><th class="amount" style="text-align:right">金額</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>工作收入</td>
+            <td>各崗位合計</td>
+            <td class="amount plus">${S.earnings}</td>
+          </tr>
+          ${LIVING_COSTS.map(c => `
+            <tr>
+              <td>${c.name}</td>
+              <td>${c.detail}</td>
+              <td class="amount minus">${c.amount}</td>
+            </tr>
+          `).join('')}
+          <tr class="total-row">
+            <td colspan="2">可支配餘額</td>
+            <td class="amount" style="text-align:right">${disposable >= 0 ? '' : '−'}${Math.abs(disposable)} 元</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="balance-box ${disposable < 0 ? 'negative' : ''}">
+        <div class="label">${disposable >= 0 ? '剩餘可用金額' : '入不敷出'}</div>
+        <div class="value ${disposable < 0 ? 'neg' : ''}">
+          ${disposable >= 0 ? disposable : '−' + Math.abs(disposable)} 元
+        </div>
+        <div class="note">
+          ${disposable >= 0
+            ? '你可以用這筆錢去買你想要的東西——但要先取得授權。'
+            : '連基本生活都不夠。你沒有餘錢消費。'}
+        </div>
+      </div>
+
+      ${disposable >= 0 ? `
+        <div class="pwd-section">
+          <p class="ws-title">消費授權</p>
+          <p class="ws-sub">要動用這筆餘額購買東西，請輸入授權密碼。沒有密碼，就不能消費。</p>
+          <div class="pwd-row">
+            <input type="password" id="pwdInput" maxlength="8" inputmode="numeric"
+                   placeholder="輸入密碼" autocomplete="off" ${S.shopUnlocked ? 'disabled' : ''}>
+            <button class="btn primary" id="pwdBtn" ${S.shopUnlocked ? 'disabled' : ''}>確認</button>
+          </div>
+          <p class="pwd-msg ${S.shopUnlocked ? 'ok' : ''}" id="pwdMsg">
+            ${S.shopUnlocked ? '✓ 已解鎖，可以前往商店。' : ''}
+          </p>
+        </div>
+      ` : ''}
+
+      <div class="actions" style="margin-top:24px">
+        ${disposable >= 0
+          ? `<button class="btn primary" id="shopBtn" ${S.shopUnlocked ? '' : 'disabled'}>前往商店</button>
+             <button class="btn" id="finalBtn">直接看總結</button>`
+          : `<button class="btn primary" id="finalBtn">看總結</button>`
+        }
+      </div>
+    </section>
+  `;
+
+  if (disposable >= 0){
+    const pwdInput = $('#pwdInput');
+    const pwdBtn   = $('#pwdBtn');
+    if (!S.shopUnlocked){
+      pwdBtn.addEventListener('click', verifyPassword);
+      pwdInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') verifyPassword();
+      });
+    }
+    const shopBtn = $('#shopBtn');
+    if (shopBtn){
+      shopBtn.addEventListener('click', () => {
+        if (!S.shopUnlocked) return;
+        renderShop();
+      });
+    }
+  }
+  $('#finalBtn').addEventListener('click', renderFinal);
+  updateWallet();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function verifyPassword(){
+  const input = $('#pwdInput');
+  const msg   = $('#pwdMsg');
+  const val   = (input.value || '').trim();
+
+  if (val === SHOP_PASSWORD){
+    S.shopUnlocked = true;
+    msg.textContent = '✓ 密碼正確，已解鎖消費。';
+    msg.className = 'pwd-msg ok';
+    input.disabled = true;
+    const pwdBtn = $('#pwdBtn');
+    if (pwdBtn) pwdBtn.disabled = true;
+    const shopBtn = $('#shopBtn');
+    if (shopBtn) shopBtn.disabled = false;
+  } else {
+    msg.textContent = '✗ 密碼不正確，請再試一次。';
+    msg.className = 'pwd-msg err';
+    input.select();
+  }
+}
+
+/* =========================================================
+   商店
+   ========================================================= */
+function purchasesTotal(){
+  return S.purchases.reduce((sum, id) => {
+    const it = SHOP_ITEMS.find(i => i.id === id);
+    return sum + (it ? it.price : 0);
+  }, 0);
+}
+function currentBalance(){
+  return S.earnings - LIVING_TOTAL - purchasesTotal();
+}
+
+function renderShop(){
+  if (!S.shopUnlocked){
+    renderSettle();
+    return;
+  }
+  S.screen = 'shop';
+  const balance = currentBalance();
+
+  mainEl.innerHTML = `
+    <section class="card">
+      <h2>用剩下的錢，買你想要的東西</h2>
+      <p class="muted small" style="margin-top:-8px">這些不是必需品。買不買由你決定，但錢就是這麼多。</p>
+
+      <div class="shop-bar">
+        <div class="balance">目前餘額 <b>${balance}</b> 元</div>
+        <button class="btn small" id="finalBtn">結束消費，看總結</button>
+      </div>
+
+      <div class="shop-grid">
+        ${SHOP_ITEMS.map(item => {
+          const owned = S.purchases.includes(item.id);
+          const canAfford = balance >= item.price;
+          return `
+            <div class="shop-item ${owned ? 'owned' : ''}">
+              <div class="name">${item.name}</div>
+              <div class="price">${item.price}<small>元</small></div>
+              ${owned
+                ? '<div class="owned-tag">✓ 已購買</div>'
+                : canAfford
+                  ? `<button class="btn primary" data-buy="${item.id}">購買</button>`
+                  : '<button class="btn" disabled>餘額不足</button>'
+              }
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </section>
+  `;
+
+  $$('[data-buy]').forEach(b =>
+    b.addEventListener('click', () => buyItem(b.dataset.buy))
+  );
+  $('#finalBtn').addEventListener('click', renderFinal);
+  updateWallet();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function buyItem(id){
+  const item = SHOP_ITEMS.find(i => i.id === id);
+  if (!item) return;
+  if (S.purchases.includes(id)) return;
+  if (currentBalance() < item.price) return;
+  S.purchases.push(id);
+  renderShop();
+}
+
+/* =========================================================
+   最終總結
+   ========================================================= */
+function renderFinal(){
+  S.screen = 'final';
+  const disposable = S.earnings - LIVING_TOTAL;
+  const spent = purchasesTotal();
+  const finalLeft = disposable - spent;
+
+  mainEl.innerHTML = `
+    <section class="card result-pass">
+      <div class="big-icon">✓</div>
+      <h2 style="margin-bottom:6px">體驗結束</h2>
+      <p class="muted" style="max-width:560px;margin:0 auto 8px">
+        你剛才做的，就是很多人每天在做的事。<br>
+        勞動、收入、生活開支、剩下的錢——這是一條真實的循環。
+      </p>
+
+      <div class="stat-row">
+        <div><b>${S.earnings}</b><small>總收入</small></div>
+        <div><b>${LIVING_TOTAL}</b><small>基本開支</small></div>
+        <div><b>${spent}</b><small>非必要消費</small></div>
+        <div><b>${finalLeft}</b><small>最後剩下</small></div>
+      </div>
+
+      ${S.purchases.length
+        ? `<div style="max-width:520px;margin:0 auto 18px;text-align:left">
+             <p class="ws-title">你買了：</p>
+             <ul style="margin:6px 0 0;padding-left:20px;font-size:14px">
+               ${S.purchases.map(id => {
+                 const it = SHOP_ITEMS.find(i => i.id === id);
+                 return it ? `<li>${it.name}　${it.price} 元</li>` : '';
+               }).join('')}
+             </ul>
+           </div>`
+        : `<p class="small muted" style="margin:0 0 18px">你沒有買任何想要的東西。</p>`
+      }
+
+      ${finalLeft < 0
+        ? `<p class="small" style="color:var(--warn);margin:0 0 20px">注意：你的支出超過了可支配餘額，出現負數。</p>`
+        : ''
+      }
+
+      <div class="actions">
+        <button class="btn primary" id="reflectBtn">寫下反思</button>
+        <button class="btn" id="restartBtn">重新開始</button>
+      </div>
+    </section>
+  `;
+
+  $('#reflectBtn').addEventListener('click', renderReflect);
+  $('#restartBtn').addEventListener('click', resetAll);
+  updateWallet();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* =========================================================
+   反思
+   ========================================================= */
+function renderReflect(){
+  mainEl.innerHTML = `
+    <section class="card">
+      <h2>勞動反思</h2>
+      <p class="muted small" style="margin-top:-8px;margin-bottom:26px">
+        用幾分鐘，寫下你剛才真實的感受。這部分沒有標準答案。
+      </p>
+
+      <div class="reflect-q">
+        <label>1. 選定崗位後必須待滿 10 分鐘才能結束，這段時間你有什麼感受？</label>
+        <textarea id="q1" placeholder="例如：明明做完幾張了，卻還要一直做下去……"></textarea>
+      </div>
+
+      <div class="reflect-q">
+        <label>2. 每完成一張收據就即時拿到報酬，這種感覺和「全部做完才發錢」有什麼不同？</label>
+        <textarea id="q2" placeholder="例如：每張拿到錢，會想再拼一張……"></textarea>
+      </div>
+
+      <div class="reflect-q">
+        <label>3. 當你看到要先扣掉食、住、衣，然後還要輸入密碼才能消費，你有什麼感受？</label>
+        <textarea id="q3" placeholder="例如：原來賺的錢大部分都不是自己的，連花錢都要別人批准……"></textarea>
+      </div>
+
+      <div class="reflect-q">
+        <label>4. 你覺得「努力工作」和「買到想要的東西」之間，是怎樣的關係？</label>
+        <textarea id="q4" placeholder="例如：要很努力才能買到一點點想要的東西……"></textarea>
+      </div>
+
+      <div class="actions" style="justify-content:flex-start">
+        <button class="btn primary" id="saveReflect">完成</button>
+        <button class="btn" id="skipReflect">略過</button>
+      </div>
+    </section>
+  `;
+
+  $('#saveReflect').addEventListener('click', () => {
+    S.reflections.push({
+      q1: $('#q1').value.trim(),
+      q2: $('#q2').value.trim(),
+      q3: $('#q3').value.trim(),
+      q4: $('#q4').value.trim()
+    });
+    renderThanks();
+  });
+  $('#skipReflect').addEventListener('click', renderThanks);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderThanks(){
+  mainEl.innerHTML = `
+    <section class="card thanks">
+      <div class="big-icon">✓</div>
+      <h2>謝謝參與</h2>
+      <p class="muted" style="max-width:520px;margin:0 auto 24px">
+        勞動不只是「做完」，而是「做好」。<br>
+        收入不只是「賺到」，而是「扣掉生活之後還剩什麼」。<br>
+        而剩下的錢，也不一定由你說了算。
+      </p>
+      <div class="actions">
+        <button class="btn primary" id="restartBtn">重新開始</button>
+      </div>
+    </section>
+  `;
+  $('#restartBtn').addEventListener('click', resetAll);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* =========================================================
+   重置
+   ========================================================= */
+function resetAll(){
+  stopLevelTimer();
+  S.levelId = null;
+  S.sheetIndex = 1;
+  S.attempts = 0;
+  S.earnings = 0;
+  S.levelStatus = { 1:'idle', 2:'idle', 3:'idle' };
+  S.levelEarnings = { 1:0, 2:0, 3:0 };
+  S.levelSheetsDone = { 1:0, 2:0, 3:0 };
+  S.currentLevelEarnings = 0;
+  S.currentLevelSheets = 0;
+  S.purchases = [];
+  S.shopUnlocked = false;
+  S.reflections = [];
+  S.screen = 'home';
+  updateWallet();
+  renderHome();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* =========================================================
+   啟動
+   ========================================================= */
+renderHome();
+updateWallet();
+</script>
+</body>
+</html>
