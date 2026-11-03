@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>破十法連續練習</title>
+<style>
+  body { font-family: sans-serif; text-align: center; padding: 20px; background:#fafafa; }
+  h1 { font-size: 42px; margin: 10px; color:#333; }
+  .container { display: flex; justify-content: center; gap: 24px; margin: 24px 0; align-items:flex-start; }
+  .frame-wrap { display:flex; flex-direction:column; align-items:center; }
+  .ten-frame {
+    display: grid;
+    grid-template-columns: repeat(5, 56px);
+    grid-template-rows: repeat(2, 56px);
+    gap: 4px;
+    border: 3px solid #333;
+    padding: 8px;
+    background: #fff;
+    border-radius: 8px;
+  }
+  .cell {
+    width: 56px; height: 56px;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.25s;
+    background:#fff;
+  }
+  .cell.filled-left  { background: #4CAF50; }
+  .cell.filled-right { background: #FF9800; }
+  .cell.removed { background: transparent; opacity: 0.15; cursor: default; }
+  .label { font-size: 16px; color:#666; margin-top:8px; }
+  .eq { font-size: 30px; margin: 14px; min-height: 40px; color:#333;}
+  .feedback { font-size: 24px; height: 30px; margin: 8px; }
+  .ok { color: #2e7d32; }
+  .err { color: #c62828; }
+  .counter { font-size: 16px; color:#888; }
+  .answer-row { display:flex; justify-content:center; align-items:center; gap:10px; margin: 14px 0; }
+  .answer-row input {
+    font-size: 32px; width: 110px; text-align:center;
+    padding: 6px; border: 2px solid #333; border-radius: 8px;
+  }
+  .answer-row input:disabled { background:#eee; }
+  button { font-size: 16px; padding: 8px 18px; margin: 0 4px; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+</style>
+</head>
+<body>
+  <h1 id="question">17 − 8 = ?</h1>
+  <div class="counter" id="counter">第 1 題</div>
+
+  <div class="container">
+    <div class="frame-wrap">
+      <div class="ten-frame" id="leftFrame"></div>
+      <div class="label">十（10）</div>
+    </div>
+    <div class="frame-wrap">
+      <div class="ten-frame" id="rightFrame"></div>
+      <div class="label">個位</div>
+    </div>
+  </div>
+
+  <div class="eq" id="eq"></div>
+
+  <div class="answer-row">
+    <span style="font-size:30px;">答案 =</span>
+    <input id="answerInput" type="number" min="0" max="20" disabled />
+    <button id="submitBtn" onclick="submitAnswer()" disabled>確定</button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+  <button onclick="newQuestion()">跳過這題</button>
+
+<script>
+let current = null;
+let removedCount = 0;
+let questionNo = 0;
+let locked = false;      // 是否已送出答案
+let readyToAnswer = false; // 是否已從十格框拿走足夠圓點
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateProblem() {
+  const minuend = randInt(11, 18);
+  const ones = minuend - 10;
+  const subtrahend = randInt(ones + 1, 9);
+  return { minuend, subtrahend };
+}
+
+function buildVisuals(p) {
+  const left = document.getElementById('leftFrame');
+  left.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell filled-left';
+    cell.onclick = () => removeFromFrame(cell);
+    left.appendChild(cell);
+  }
+  const right = document.getElementById('rightFrame');
+  right.innerHTML = '';
+  const onesCount = p.minuend - 10;
+  for (let i = 0; i < 10; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    if (i < onesCount) cell.classList.add('filled-right');
+    right.appendChild(cell);
+  }
+}
+
+function newQuestion() {
+  current = generateProblem();
+  removedCount = 0;
+  locked = false;
+  readyToAnswer = false;
+  questionNo++;
+
+  document.getElementById('counter').textContent = `第 ${questionNo} 題`;
+  document.getElementById('question').textContent =
+    `${current.minuend} − ${current.subtrahend} = ?`;
+  document.getElementById('eq').textContent = '';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+
+  const input = document.getElementById('answerInput');
+  input.value = '';
+  input.disabled = true;
+  input.style.borderColor = '#333';
+  document.getElementById('submitBtn').disabled = true;
+
+  buildVisuals(current);
+}
+
+function removeFromFrame(cell) {
+  if (locked || readyToAnswer) return;
+  if (cell.classList.contains('removed')) return;
+  if (removedCount >= current.subtrahend) return;
+
+  cell.classList.remove('filled-left');
+  cell.classList.add('removed');
+  removedCount++;
+
+  document.getElementById('eq').textContent =
+    `10 − ${removedCount} = ${10 - removedCount}`;
+
+  if (removedCount === current.subtrahend) {
+    enableAnswerInput();
+  }
+}
+
+function enableAnswerInput() {
+  readyToAnswer = true;
+  const leftInFrame = 10 - current.subtrahend;
+  const onesCount = current.minuend - 10;
+  document.getElementById('eq').textContent =
+    `${leftInFrame} + ${onesCount} = ?　請輸入答案`;
+
+  const input = document.getElementById('answerInput');
+  input.disabled = false;
+  input.focus();
+  document.getElementById('submitBtn').disabled = false;
+
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') submitAnswer();
+  };
+}
+
+function submitAnswer() {
+  if (locked || !readyToAnswer) return;
+  const input = document.getElementById('answerInput');
+  const val = input.value.trim();
+  const fb = document.getElementById('feedback');
+
+  if (val === '') {
+    fb.textContent = '請先輸入答案';
+    fb.className = 'feedback err';
+    return;
+  }
+
+  const leftInFrame = 10 - current.subtrahend;
+  const onesCount = current.minuend - 10;
+  const answer = leftInFrame + onesCount;
+  const userAns = parseInt(val, 10);
+
+  if (userAns === answer) {
+    locked = true;
+    input.disabled = true;
+    input.style.borderColor = '#2e7d32';
+    document.getElementById('submitBtn').disabled = true;
+    fb.textContent = `✅ 答對了！${leftInFrame} + ${onesCount} = ${answer}`;
+    fb.className = 'feedback ok';
+    document.getElementById('eq').textContent =
+      `${current.minuend} − ${current.subtrahend} = ${answer}`;
+    setTimeout(newQuestion, 1600);
+  } else {
+    input.style.borderColor = '#c62828';
+    fb.textContent = `❌ 再想想：十格框剩 ${leftInFrame} 個，加框外 ${onesCount} 個`;
+    fb.className = 'feedback err';
+    setTimeout(() => { input.style.borderColor = '#333'; }, 800);
+  }
+}
+
+newQuestion();
+</script>
+</body>
+</html>
