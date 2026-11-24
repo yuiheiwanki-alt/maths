@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>看圖列式 · 二十題成績紀錄版</title>
+<style>
+  :root{
+    --ink:#17334d;
+    --brand:#3aa0ff;
+    --brand2:#1f7fe0;
+    --ok:#19a974;
+    --bad:#ff5252;
+    --line:#bfd8f2;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    padding:12px;
+    font-family:"PingFang TC","Hiragino Sans TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,#e8f4ff,#f6fbff 60%);
+    min-height:100%;
+    display:flex;
+    justify-content:center;
+  }
+  .app{width:100%;max-width:680px;padding-bottom:8px;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px;gap:8px;}
+  .title{font-size:18px;font-weight:800;letter-spacing:.5px;flex-shrink:0;}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+  .pill{
+    background:#fff;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:700;
+    color:var(--brand2);box-shadow:0 2px 8px rgba(58,160,255,.18);
+    white-space:nowrap;
+  }
+  .pill.timer{color:#e8890c;box-shadow:0 2px 8px rgba(255,180,60,.28);}
+  .pill.score{color:var(--ok);box-shadow:0 2px 8px rgba(25,169,116,.22);}
+
+  /* ===== 登入 / 結業畫面 ===== */
+  .overlay{
+    position:fixed;inset:0;z-index:100;
+    background:linear-gradient(180deg,#dceeff,#f2faff);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    overflow:auto;
+  }
+  .overlay[hidden]{display:none;}
+  .panel{
+    background:#fff;border-radius:24px;padding:28px 24px;
+    box-shadow:0 12px 40px rgba(58,160,255,.25);
+    width:100%;max-width:420px;text-align:center;
+  }
+  .panel h1{margin:0 0 6px;font-size:24px;}
+  .panel .sub{color:#5b7a99;font-size:14px;margin-bottom:18px;line-height:1.5;}
+  .field{margin-bottom:14px;text-align:left;}
+  .field label{display:block;font-size:14px;font-weight:800;color:var(--brand2);margin-bottom:6px;}
+  .field input, .field select{
+    width:100%;padding:13px 14px;font-size:18px;font-weight:700;font-family:inherit;
+    border:2.5px solid var(--line);border-radius:14px;background:#f7fbff;color:var(--ink);
+    outline:none;transition:.15s;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%233aa0ff' stroke-width='3' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 14px center;background-size:18px;
+    padding-right:44px;
+  }
+  .field input:focus, .field select:focus{border-color:var(--brand);background-color:#fff;box-shadow:0 0 0 3px rgba(58,160,255,.15);}
+  .field select:invalid{color:#93aec7;}
+  .field select option{color:var(--ink);}
+  .btn-start{
+    width:100%;margin-top:6px;padding:15px;border:none;border-radius:15px;
+    background:linear-gradient(180deg,#4aaeff,#2b8ce8);
+    color:#fff;font-size:18px;font-weight:800;font-family:inherit;
+    cursor:pointer;box-shadow:0 4px 0 #1f7fe0;transition:.1s;
+  }
+  .btn-start:active{transform:translateY(2px);box-shadow:0 2px 0 #1f7fe0;}
+  .login-err{color:var(--bad);font-size:14px;font-weight:700;min-height:20px;margin-top:10px;}
+
+  .score-big{font-size:52px;font-weight:900;color:var(--brand2);margin:8px 0;}
+  .score-big.ok{color:var(--ok);}
+  .result-row{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0 16px;}
+  .result-chip{
+    background:#f2f8ff;border-radius:12px;padding:10px 16px;font-size:15px;font-weight:800;color:var(--brand2);
+  }
+  .send-status{font-size:14px;font-weight:700;margin:6px 0 4px;min-height:20px;}
+  .send-status.ok{color:var(--ok);}
+  .send-status.bad{color:var(--bad);}
+  .btn-retry{
+    border:none;background:#fff;color:var(--brand2);font-weight:800;font-family:inherit;
+    padding:10px 22px;border-radius:999px;font-size:15px;cursor:pointer;
+    box-shadow:0 0 0 2.5px var(--brand);margin-top:8px;
+  }
+
+  .card{
+    background:#fff;border-radius:20px;padding:16px 16px;margin-bottom:12px;
+    box-shadow:0 4px 16px rgba(58,160,255,.13);
+  }
+
+  .sentence{
+    font-size:clamp(20px,5.6vw,25px);
+    line-height:1.6;
+    font-weight:700;
+    text-align:center;
+    margin-bottom:8px;
+  }
+  .sentence b{color:var(--brand2);}
+
+  .visual{display:flex;justify-content:center;padding:8px 0 4px;}
+  .vstack{display:flex;flex-direction:column;gap:8px;align-items:flex-start;max-width:100%;}
+  .vrow{display:flex;gap:clamp(3px,0.9vw,7px);flex-wrap:wrap;max-width:100%;justify-content:flex-start;}
+  .item{
+    width:clamp(28px,7.2vw,40px);
+    height:clamp(28px,7.2vw,40px);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;border-radius:9px;
+    font-size:clamp(20px,5.6vw,30px);
+    line-height:1;
+  }
+  .item .em{display:block;line-height:1;}
+  .item.extra{background:#fff6d8;box-shadow:inset 0 0 0 2px #ffc94d;}
+  .item.gone .em{opacity:.28;}
+  .item.gone::after{
+    content:"✕";position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:clamp(20px,5.6vw,32px);font-weight:900;color:#ff5252;
+  }
+  .badge{
+    align-self:center;margin-top:4px;background:#eaf4ff;color:var(--brand2);
+    font-weight:800;font-size:16px;padding:4px 20px;border-radius:999px;
+  }
+
+  .equation{display:flex;align-items:center;justify-content:center;gap:9px;margin:8px 0 18px;}
+  .slot{
+    width:clamp(50px,15vw,64px);
+    height:clamp(50px,15vw,64px);
+    border-radius:15px;
+    border:2.5px dashed var(--line);
+    background:#f7fbff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:clamp(22px,7vw,30px);font-weight:800;
+    color:#b9cfe8;cursor:pointer;transition:.15s;
+    user-select:none;
+  }
+  .slot.filled{
+    border-style:solid;border-color:var(--brand);
+    background:#eaf4ff;color:var(--brand2);
+    box-shadow:0 3px 0 #cfe4fb;
+  }
+  .eq{font-size:clamp(22px,6.5vw,28px);font-weight:800;color:var(--brand);}
+  .answer{
+    min-width:clamp(60px,18vw,80px);
+    height:clamp(50px,15vw,64px);
+    border-radius:15px;
+    border:2.5px solid #ffd166;
+    background:#fffdf2;
+    display:flex;align-items:center;justify-content:center;
+    font-size:clamp(22px,7vw,30px);font-weight:800;color:#e8a400;
+    padding:0 8px;cursor:pointer;
+  }
+  .answer.empty{color:#e6d4a4;}
+
+  .slot.hover, .answer.hover{
+    border-color:var(--ok) !important;
+    background:#eafff5 !important;
+    transform:scale(1.06);
+  }
+
+  .slot.wrong{
+    border-style:solid !important;
+    border-color:var(--bad) !important;
+    background:#ffecec !important;
+    color:#e03131 !important;
+    box-shadow:0 3px 0 #ffc9c9 !important;
+    animation:shake .35s;
+  }
+  .answer.wrong{
+    border-color:var(--bad) !important;
+    background:#ffecec !important;
+    color:#e03131 !important;
+    animation:shake .35s;
+  }
+
+  .options{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-bottom:4px;}
+  .opt{
+    min-width:clamp(54px,15vw,70px);
+    height:clamp(48px,13vw,58px);
+    padding:0 14px;
+    border-radius:15px;
+    border:2.5px solid #cfe4fb;
+    background:#fff;color:var(--brand2);
+    font-size:clamp(21px,6vw,27px);font-weight:800;
+    font-family:inherit;cursor:grab;transition:.12s;
+    box-shadow:0 3px 0 #dceafa;
+    touch-action:none;
+    user-select:none;
+  }
+  .opt:active{transform:translateY(2px);box-shadow:0 1px 0 #dceafa;}
+  .opt.op{background:#eef8ff;}
+  .opt.dragging{opacity:.28;box-shadow:none;}
+
+  .ghost{
+    position:fixed;
+    transform:translate(-50%,-50%);
+    display:flex;align-items:center;justify-content:center;
+    border-radius:15px;
+    border:2.5px solid var(--brand);
+    background:#fff;color:var(--brand2);
+    font-weight:800;
+    pointer-events:none;
+    z-index:999;
+    box-shadow:0 10px 24px rgba(23,51,77,.3);
+  }
+
+  .btn-check{
+    display:block;width:100%;margin-top:18px;
+    padding:15px;border:none;border-radius:15px;
+    background:linear-gradient(180deg,#4aaeff,#2b8ce8);
+    color:#fff;font-size:18px;font-weight:800;font-family:inherit;
+    cursor:pointer;box-shadow:0 4px 0 #1f7fe0;transition:.1s;
+  }
+  .btn-check:active{transform:translateY(2px);box-shadow:0 2px 0 #1f7fe0;}
+  .btn-check:disabled{
+    background:#d9e6f2;color:#fff;box-shadow:0 4px 0 #c6d6e6;cursor:not-allowed;
+  }
+
+  .toast{
+    position:fixed;left:50%;bottom:20px;
+    transform:translate(-50%,24px);
+    max-width:92vw;
+    display:none;
+    align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;
+    background:#fff;border-radius:16px;
+    padding:13px 20px;
+    box-shadow:0 10px 30px rgba(23,51,77,.25);
+    font-weight:700;font-size:16px;line-height:1.4;text-align:center;
+    z-index:60;opacity:0;transition:opacity .22s, transform .22s;
+  }
+  .toast.show{display:flex;opacity:1;transform:translate(-50%,0);}
+  .toast.ok{color:var(--ok);}
+  .toast.bad{color:var(--bad);}
+  .btn-next{
+    border:none;background:var(--ok);color:#fff;font-weight:800;font-family:inherit;
+    padding:10px 22px;border-radius:999px;font-size:16px;cursor:pointer;
+    box-shadow:0 3px 0 #0e8a5c;
+  }
+  .btn-next:active{transform:translateY(2px);box-shadow:0 1px 0 #0e8a5c;}
+
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-6px)}
+    75%{transform:translateX(6px)}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="title">🧮 看圖列式</div>
+    <div class="pills">
+      <div class="pill" id="studentPill" hidden></div>
+      <div class="pill score" id="scorePill" hidden>答對 0 / 20</div>
+      <div class="pill" id="progress">第 1 / 20 題</div>
+      <div class="pill timer" id="timer">2:00</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sentence" id="sentence"></div>
+    <div class="visual" id="visual"></div>
+  </div>
+
+  <div class="card">
+    <div class="equation" id="equation">
+      <div class="slot" data-slot="0">?</div>
+      <div class="slot" data-slot="1">?</div>
+      <div class="slot" data-slot="2">?</div>
+      <div class="eq">=</div>
+      <div class="answer empty" id="answerBox">?</div>
+    </div>
+
+    <div class="options" id="options"></div>
+
+    <button class="btn-check" id="checkBtn" disabled>✓ 檢查答案</button>
+  </div>
+
+</div>
+
+<!-- ===== 登入畫面：輸入班別 + 學號 ===== -->
+<div class="overlay" id="loginScreen">
+  <div class="panel">
+    <h1>🧮 看圖列式</h1>
+    <div class="sub">共 20 題，答完會自動記錄成績。<br>請先輸入班別同學號：</div>
+    <div class="field">
+      <label for="inpClass">班別</label>
+      <select id="inpClass" required>
+        <option value="" selected disabled>請選擇班別</option>
+        <option value="1A">1A</option>
+        <option value="1B">1B</option>
+        <option value="1C">1C</option>
+        <option value="1D">1D</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="inpSid">學號</label>
+      <select id="inpSid" required>
+        <option value="" selected disabled>請選擇學號</option>
+      </select>
+    </div>
+    <button class="btn-start" id="btnStart">開始作答 ▶</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ===== 結業畫面：成績 + 上傳狀態 ===== -->
+<div class="overlay" id="finishScreen" hidden>
+  <div class="panel">
+    <h1>🎓 完成了！</h1>
+    <div class="sub" id="finishWho"></div>
+    <div class="score-big" id="finalScore">0 / 20</div>
+    <div class="result-row">
+      <div class="result-chip" id="chipFirstTry">首次答對：0 題</div>
+      <div class="result-chip" id="chipAttempts">總嘗試次數：0 次</div>
+      <div class="result-chip" id="chipTime">用時：--</div>
+    </div>
+    <div class="send-status" id="sendStatus">正在上傳成績…</div>
+    <button class="btn-retry" id="btnResend" hidden>重新上傳 ↻</button>
+    <button class="btn-start" id="btnAgain">再做一次 🔁</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   題庫：20 題
+   加法題接受 A+B 和 B+A 兩種順序
+   ========================================================= */
+const PROBLEMS = [
+  {
+    sentence: '🐟 有 <b>10</b> 條，吃去 <b>10</b> 條，還餘多少條？',
+    visual: { type:'single', e:'🐟', n:10, gone:[0,1,2,3,4,5,6,7,8,9] },
+    a:10, op:'-', b:10, ans:0, extra:3
+  },
+  {
+    sentence: '🍊 有 <b>10</b> 個，🍐 有 <b>4</b> 個。🍊 比 🍐 <b>多幾個</b>？',
+    visual: { type:'twoRows', e1:'🍊', n1:10, e2:'🍐', n2:4, highlight:true },
+    a:10, op:'-', b:4, ans:6, extra:7
+  },
+  {
+    sentence: '🍎 有 <b>6</b> 個，🍌 有 <b>4</b> 個。共有水果 <b>多少個</b>？',
+    visual: { type:'twoRows', e1:'🍎', n1:6, e2:'🍌', n2:4, badge:'? 個' },
+    a:6, op:'+', b:4, ans:10, extra:8
+  },
+  {
+    sentence: '🍪 有 <b>8</b> 塊，<b>吃去 3 塊</b>，還餘幾塊？',
+    visual: { type:'single', e:'🍪', n:8, gone:[5,6,7] },
+    a:8, op:'-', b:3, ans:5, extra:6
+  },
+  {
+    sentence: '🍞 有 <b>9</b> 個，<b>賣出 4 個</b>，還餘幾個？',
+    visual: { type:'single', e:'🍞', n:9, gone:[5,6,7,8] },
+    a:9, op:'-', b:4, ans:5, extra:6
+  },
+  {
+    sentence: '🍬 有 <b>7</b> 粒，<b>吃掉 2 粒</b>，還餘幾粒？',
+    visual: { type:'single', e:'🍬', n:7, gone:[5,6] },
+    a:7, op:'-', b:2, ans:5, extra:4
+  },
+  {
+    sentence: '🐟 有 <b>12</b> 條，吃去 <b>5</b> 條，還餘多少條？',
+    visual: { type:'single', e:'🐟', n:12, gone:[7,8,9,10,11] },
+    a:12, op:'-', b:5, ans:7, extra:6
+  },
+  {
+    sentence: '🎂 有 <b>5</b> 個，吃去 <b>2</b> 個，還餘幾個？',
+    visual: { type:'single', e:'🎂', n:5, gone:[3,4] },
+    a:5, op:'-', b:2, ans:3, extra:4
+  },
+  {
+    sentence: '🎈 有 <b>8</b> 個，賣出 <b>3</b> 個，還餘幾個？',
+    visual: { type:'single', e:'🎈', n:8, gone:[5,6,7] },
+    a:8, op:'-', b:3, ans:5, extra:6
+  },
+  {
+    sentence: '🐟 有 <b>9</b> 條，吃去 <b>4</b> 條，還餘多少條？',
+    visual: { type:'single', e:'🐟', n:9, gone:[5,6,7,8] },
+    a:9, op:'-', b:4, ans:5, extra:6
+  },
+  {
+    sentence: '🍎 有 <b>7</b> 個，🍐 有 <b>3</b> 個。🍎 比 🍐 <b>多幾個</b>？',
+    visual: { type:'twoRows', e1:'🍎', n1:7, e2:'🍐', n2:3, highlight:true },
+    a:7, op:'-', b:3, ans:4, extra:5
+  },
+  {
+    sentence: '🍌 有 <b>5</b> 個，🍊 有 <b>4</b> 個。共有水果 <b>多少個</b>？',
+    visual: { type:'twoRows', e1:'🍌', n1:5, e2:'🍊', n2:4, badge:'? 個' },
+    a:5, op:'+', b:4, ans:9, extra:6
+  },
+  {
+    sentence: '🚗 有 <b>13</b> 輛，賣出 <b>6</b> 輛，還餘幾輛？',
+    visual: { type:'single', e:'🚗', n:13, gone:[7,8,9,10,11,12] },
+    a:13, op:'-', b:6, ans:7, extra:8
+  },
+  {
+    sentence: '🌸 有 <b>9</b> 朵，摘去 <b>2</b> 朵，還餘幾朵？',
+    visual: { type:'single', e:'🌸', n:9, gone:[7,8] },
+    a:9, op:'-', b:2, ans:7, extra:8
+  },
+  {
+    sentence: '🍇 有 <b>6</b> 串，🍓 有 <b>5</b> 串。共有水果 <b>多少串</b>？',
+    visual: { type:'twoRows', e1:'🍇', n1:6, e2:'🍓', n2:5, badge:'? 串' },
+    a:6, op:'+', b:5, ans:11, extra:12
+  },
+  {
+    sentence: '🐟 有 <b>15</b> 條，吃去 <b>8</b> 條，還餘多少條？',
+    visual: { type:'single', e:'🐟', n:15, gone:[7,8,9,10,11,12,13,14] },
+    a:15, op:'-', b:8, ans:7, extra:9
+  },
+  {
+    sentence: '🥚 有 <b>10</b> 隻，吃了 <b>3</b> 隻，還餘幾隻？',
+    visual: { type:'single', e:'🥚', n:10, gone:[7,8,9] },
+    a:10, op:'-', b:3, ans:7, extra:8
+  },
+  {
+    sentence: '🌰 有 <b>4</b> 個，🍄 有 <b>8</b> 個。共有 <b>多少個</b>？',
+    visual: { type:'twoRows', e1:'🌰', n1:4, e2:'🍄', n2:8, badge:'? 個' },
+    a:4, op:'+', b:8, ans:12, extra:13
+  },
+  {
+    sentence: '🍭 有 <b>11</b> 支，賣出 <b>5</b> 支，還餘幾支？',
+    visual: { type:'single', e:'🍭', n:11, gone:[6,7,8,9,10] },
+    a:11, op:'-', b:5, ans:6, extra:7
+  },
+  {
+    sentence: '🐟 有 <b>20</b> 條，吃去 <b>12</b> 條，還餘多少條？',
+    visual: { type:'single', e:'🐟', n:20, gone:[8,9,10,11,12,13,14,15,16,17,18,19] },
+    a:20, op:'-', b:12, ans:8, extra:9
+  }
+];
+
+/* =========================================================
+   成績紀錄設定
+   - ENDPOINT：Apps Script /exec（同 addition-match.html 一樣）
+   - PER_Q_SECONDS：每題限時（逾時當作未答對，自動跳下一題）
+   ========================================================= */
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbwrq_CsUly6S4237NssZ1QovTpklsN-wlEgXrPflB8X8fgYnRH2-Pt3wcON64ltXMvc/exec";
+const APP_NAME = "看圖列式20題";
+const APP_VERSION = "1.0";
+const PER_Q_SECONDS = 120;
+
+/* =========================================================
+   狀態
+   ========================================================= */
+const state = {
+  index: 0,
+  slots: [null, null, null],
+  answer: '',
+  locked: false,
+  options: [],
+  wrong: new Set(),
+  tries: 0,
+  student: null,
+  results: [],
+  sessionStart: null,
+  sent: false
+};
+
+const $ = id => document.getElementById(id);
+
+/* =========================================================
+   工具
+   ========================================================= */
+function shuffle(arr){
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function slotEl(k){
+  return k === 'ans'
+    ? $('answerBox')
+    : document.querySelector(`.slot[data-slot="${k}"]`);
+}
+
+function clearWrong(k){
+  if (!state.wrong.has(k)) return;
+  state.wrong.delete(k);
+  const el = slotEl(k);
+  if (el) el.classList.remove('wrong');
+}
+
+function fmtTime(sec){
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+/* =========================================================
+   圖畫
+   ========================================================= */
+function rowHTML(emoji, n, marks){
+  let h = '<div class="vrow">';
+  for (let i = 0; i < n; i++){
+    const cls = (marks && marks[i]) ? ' ' + marks[i] : '';
+    h += `<span class="item${cls}"><span class="em">${emoji}</span></span>`;
+  }
+  h += '</div>';
+  return h;
+}
+
+function renderVisual(p){
+  const v = p.visual;
+  let html = '<div class="vstack">';
+
+  if (v.type === 'twoRows'){
+    const m1 = [], m2 = [];
+    if (v.highlight){
+      for (let i = v.n2; i < v.n1; i++) m1[i] = 'extra';
+      for (let i = v.n1; i < v.n2; i++) m2[i] = 'extra';
+    }
+    html += rowHTML(v.e1, v.n1, m1);
+    html += rowHTML(v.e2, v.n2, m2);
+    if (v.badge) html += `<div class="badge">${v.badge}</div>`;
+  } else {
+    const gone = new Set(v.gone || []);
+    const marks = [];
+    for (let i = 0; i < v.n; i++) if (gone.has(i)) marks[i] = 'gone';
+    html += rowHTML(v.e, v.n, marks);
+  }
+
+  html += '</div>';
+  return html;
+}
+
+/* =========================================================
+   選項
+   - a === b 時保留兩個相同數字
+   - 其餘題目取 4 個不重複數字
+   ========================================================= */
+function buildOptions(p){
+  let nums;
+
+  if (p.a === p.b){
+    const out = [p.a, p.a];
+    const seen = new Set(out);
+    if (!seen.has(p.ans)){ out.push(p.ans); seen.add(p.ans); }
+    if (!seen.has(p.extra)){ out.push(p.extra); seen.add(p.extra); }
+
+    let n = 1;
+    while (out.length < 4){
+      if (!seen.has(n)){ seen.add(n); out.push(n); }
+      n++;
+    }
+    nums = out.slice(0, 4);
+  } else {
+    const uniq = [...new Set([p.a, p.b, p.ans, p.extra])];
+    let n = 1;
+    while (uniq.length < 4){
+      if (!uniq.includes(n)) uniq.push(n);
+      n++;
+    }
+    nums = uniq.slice(0, 4);
+  }
+
+  const out = nums.map(v => ({ type:'num', v }));
+  out.push({ type:'op', v:'+' });
+  out.push({ type:'op', v:'-' });
+
+  return shuffle(out);
+}
+
+function renderOptions(){
+  const wrap = $('options');
+  wrap.innerHTML = '';
+
+  state.options.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'opt' + (o.type === 'op' ? ' op' : '');
+    btn.textContent = o.type === 'op' ? (o.v === '+' ? '＋' : '－') : o.v;
+
+    btn.addEventListener('click', e => e.preventDefault());
+    btn.addEventListener('pointerdown', e => startDrag(e, btn, o));
+
+    wrap.appendChild(btn);
+  });
+}
+
+/* =========================================================
+   拖放
+   ========================================================= */
+let drag = null;
+
+function startDrag(e, el, opt){
+  if (state.locked) return;
+  e.preventDefault();
+
+  drag = {
+    el, opt,
+    startX: e.clientX,
+    startY: e.clientY,
+    moved: false,
+    ghost: null,
+    hoverEl: null
+  };
+
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerUp);
+}
+
+function createGhost(el, x, y){
+  const r = el.getBoundingClientRect();
+  const g = document.createElement('div');
+  g.className = 'ghost';
+  g.textContent = el.textContent;
+  g.style.width = r.width + 'px';
+  g.style.height = r.height + 'px';
+  g.style.fontSize = getComputedStyle(el).fontSize;
+  g.style.left = x + 'px';
+  g.style.top = y + 'px';
+  document.body.appendChild(g);
+  return g;
+}
+
+function findDropTarget(x, y){
+  const el = document.elementFromPoint(x, y);
+  return el ? el.closest('.slot, .answer') : null;
+}
+
+function setHover(el){
+  if (drag.hoverEl === el) return;
+  if (drag.hoverEl) drag.hoverEl.classList.remove('hover');
+  drag.hoverEl = el;
+  if (el) el.classList.add('hover');
+}
+
+function onPointerMove(e){
+  if (!drag) return;
+
+  const dx = e.clientX - drag.startX;
+  const dy = e.clientY - drag.startY;
+
+  if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+
+  if (!drag.moved){
+    drag.moved = true;
+    drag.ghost = createGhost(drag.el, e.clientX, e.clientY);
+    drag.el.classList.add('dragging');
+  }
+
+  drag.ghost.style.left = e.clientX + 'px';
+  drag.ghost.style.top = e.clientY + 'px';
+  setHover(findDropTarget(e.clientX, e.clientY));
+}
+
+function onPointerUp(e){
+  window.removeEventListener('pointermove', onPointerMove);
+  window.removeEventListener('pointerup', onPointerUp);
+  window.removeEventListener('pointercancel', onPointerUp);
+
+  if (!drag) return;
+  const d = drag;
+  drag = null;
+
+  if (d.hoverEl) d.hoverEl.classList.remove('hover');
+  if (d.ghost) d.ghost.remove();
+  d.el.classList.remove('dragging');
+
+  if (d.moved){
+    const t = findDropTarget(e.clientX, e.clientY);
+    if (t) dropInto(t, d.opt);
+  } else {
+    if (d.opt.type === 'op') placeOp(d.opt.v);
+    else placeNumber(d.opt.v);
+  }
+}
+
+function dropInto(targetEl, opt){
+  if (state.locked) return;
+
+  if (targetEl.id === 'answerBox'){
+    state.answer = String(opt.v);
+    clearWrong('ans');
+  } else {
+    const k = Number(targetEl.dataset.slot);
+    state.slots[k] = { type: opt.type, v: opt.v };
+    clearWrong(k);
+  }
+
+  renderSlots();
+  renderAnswer();
+  updateCheck();
+}
+
+/* =========================================================
+   點選填入（備用）
+   ========================================================= */
+function placeNumber(v){
+  if (state.locked) return;
+
+  if (!state.slots[0]){
+    state.slots[0] = { type:'num', v };
+    clearWrong(0);
+  } else if (!state.slots[2]){
+    state.slots[2] = { type:'num', v };
+    clearWrong(2);
+  } else {
+    state.answer = String(v);
+    clearWrong('ans');
+  }
+
+  renderSlots();
+  renderAnswer();
+  updateCheck();
+}
+
+function placeOp(v){
+  if (state.locked) return;
+  state.slots[1] = { type:'op', v };
+  clearWrong(1);
+  renderSlots();
+  updateCheck();
+}
+
+function clearSlot(k){
+  if (state.locked) return;
+  if (!state.slots[k]) return;
+
+  state.slots[k] = null;
+  clearWrong(k);
+  renderSlots();
+  updateCheck();
+}
+
+function renderSlots(){
+  document.querySelectorAll('.slot').forEach((el, i) => {
+    const s = state.slots[i];
+    if (s){
+      el.textContent = s.type === 'op' ? (s.v === '+' ? '＋' : '－') : s.v;
+      el.classList.add('filled');
+    } else {
+      el.textContent = '?';
+      el.classList.remove('filled');
+    }
+  });
+}
+
+function renderAnswer(){
+  const el = $('answerBox');
+  if (state.answer === ''){
+    el.textContent = '?';
+    el.classList.add('empty');
+  } else {
+    el.textContent = state.answer;
+    el.classList.remove('empty');
+  }
+}
+
+/* =========================================================
+   浮動提示
+   ========================================================= */
+let toastTimer = null;
+
+function hideToast(){
+  clearTimeout(toastTimer);
+  $('toast').classList.remove('show', 'ok', 'bad');
+}
+
+function setFeedback(type, msg, showNext){
+  const t = $('toast');
+  clearTimeout(toastTimer);
+
+  if (!msg){
+    hideToast();
+    return;
+  }
+
+  t.className = 'toast show ' + (type || '');
+  t.innerHTML = '';
+
+  const span = document.createElement('span');
+  span.textContent = msg;
+  t.appendChild(span);
+
+  if (showNext){
+    const btn = document.createElement('button');
+    btn.className = 'btn-next';
+    btn.textContent = (state.index + 1 >= PROBLEMS.length) ? '睇成績 🎓' : '下一題 ➡';
+    btn.addEventListener('click', () => {
+      hideToast();
+      nextProblem();
+    });
+    t.appendChild(btn);
+  } else {
+    toastTimer = setTimeout(hideToast, 2600);
+  }
+}
+
+/* =========================================================
+   每題倒數：限時內未答對 → 記錄後自動跳下一題
+   ========================================================= */
+let countdown = PER_Q_SECONDS;
+let timerId = null;
+
+function updateTimerDisplay(){
+  $('timer').textContent = fmtTime(countdown);
+}
+
+function startTimer(){
+  clearInterval(timerId);
+  countdown = PER_Q_SECONDS;
+  updateTimerDisplay();
+
+  timerId = setInterval(() => {
+    countdown--;
+    updateTimerDisplay();
+    if (countdown <= 0){
+      clearInterval(timerId);
+      if (!state.locked){
+        state.locked = true;
+        updateCheck();
+        recordResult(false, false);
+        setFeedback('bad', `⏰ 時間到！此題未答對，繼續下一題。`, true);
+      }
+    }
+  }, 1000);
+}
+
+function updateScorePill(){
+  const ok = state.results.filter(r => r.ok).length;
+  $('scorePill').textContent = `答對 ${ok} / ${PROBLEMS.length}`;
+}
+
+/* =========================================================
+   檢查
+   加法接受 A+B 和 B+A；減法必須被減數在前
+   ========================================================= */
+function updateCheck(){
+  const ready = state.slots.every(s => s !== null) && state.answer !== '';
+  $('checkBtn').disabled = !ready || state.locked;
+}
+
+function markWrong(k){
+  state.wrong.add(k);
+  const el = slotEl(k);
+  if (el){
+    el.classList.remove('wrong');
+    void el.offsetWidth;
+    el.classList.add('wrong');
+  }
+}
+
+function recordResult(ok, counted){
+  state.results.push({
+    q: state.index + 1,
+    ok: ok,
+    firstTry: ok && counted === 1,
+    tries: counted
+  });
+  updateScorePill();
+}
+
+function checkAnswer(){
+  if (state.locked) return;
+
+  const p = PROBLEMS[state.index];
+  const [s0, s1, s2] = state.slots;
+
+  if (!s0 || !s1 || !s2 || state.answer === '') return;
+
+  const s0num = s0.type === 'num' ? s0.v : null;
+  const s2num = s2.type === 'num' ? s2.v : null;
+
+  const opOK = s1.type === 'op' && s1.v === p.op;
+
+  let numsOK = false;
+  if (s0num !== null && s2num !== null){
+    if (p.op === '+'){
+      numsOK = (s0num === p.a && s2num === p.b) ||
+               (s0num === p.b && s2num === p.a);
+    } else {
+      numsOK = (s0num === p.a && s2num === p.b);
+    }
+  }
+
+  const ansOK = Number(state.answer) === p.ans;
+
+  if (opOK && numsOK && ansOK){
+    state.locked = true;
+    updateCheck();
+    clearInterval(timerId);
+
+    state.tries++;
+    recordResult(true, state.tries);
+
+    const opChar = p.op === '+' ? '＋' : '－';
+    let note = '';
+    /* 加法順序交換也對時，給學生一個小提示 */
+    if (p.op === '+' && s0num !== p.a && p.a !== p.b){
+      note = '　（加法交換順序也正確）';
+    }
+    setFeedback('ok', `🎉 完全正確！　${s0num} ${opChar} ${s2num} = ${p.ans}${note}`, true);
+    return;
+  }
+
+  /* ---- 錯誤：逐格標紅 ---- */
+  state.tries++;
+
+  if (!opOK) markWrong(1);
+
+  if (!numsOK){
+    if (p.op === '+'){
+      const pool = [p.a, p.b];
+      const s0ok = s0num !== null && pool.includes(s0num);
+      const s2ok = s2num !== null && pool.includes(s2num);
+
+      if (!s0ok) markWrong(0);
+      if (!s2ok) markWrong(2);
+
+      /* 兩格都在合法數字池裏但填了同一個數（例如 a=6, b=4 時填 6,6） */
+      if (s0ok && s2ok && s0num === s2num && p.a !== p.b){
+        markWrong(0);
+        markWrong(2);
+      }
+    } else {
+      if (s0num !== p.a) markWrong(0);
+      if (s2num !== p.b) markWrong(2);
+    }
+  }
+
+  if (!ansOK) markWrong('ans');
+
+  let msg;
+  const wrongSlots = Array.from(state.wrong);
+
+  if (wrongSlots.length === 1 && wrongSlots[0] === 'ans'){
+    msg = '列式啱喇！再計一計答案係幾多。';
+  } else if (wrongSlots.includes(1)){
+    msg = '紅色格要改：數目「變多」用 ＋，「變少」用 －。';
+  } else if (wrongSlots.includes(0) || wrongSlots.includes(2)){
+    if (p.op === '+'){
+      msg = '紅色格要改：加法可以交換順序，兩個數字都要對。';
+    } else {
+      msg = '紅色格要改：減法要「原來數量 － 拿走數量」，數一數圖再拉。';
+    }
+  } else {
+    msg = '紅色格要改一改，再試一次。';
+  }
+
+  setFeedback('bad', msg, false);
+  updateCheck();
+}
+
+/* =========================================================
+   出題 / 換題（順序完成 20 題後顯示成績）
+   ========================================================= */
+function renderProblem(){
+  const p = PROBLEMS[state.index];
+
+  state.slots = [null, null, null];
+  state.answer = '';
+  state.locked = false;
+  state.wrong.clear();
+  state.tries = 0;
+  state.options = buildOptions(p);
+
+  document.querySelectorAll('.slot, .answer').forEach(el => {
+    el.classList.remove('wrong', 'hover', 'filled');
+  });
+  $('answerBox').classList.add('empty');
+
+  $('progress').textContent = `第 ${state.index + 1} / ${PROBLEMS.length} 題`;
+  $('sentence').innerHTML = p.sentence;
+  $('visual').innerHTML = renderVisual(p);
+
+  renderSlots();
+  renderOptions();
+  renderAnswer();
+  updateCheck();
+  hideToast();
+}
+
+function nextProblem(){
+  state.index++;
+  if (state.index >= PROBLEMS.length){
+    finishSession();
+    return;
+  }
+  renderProblem();
+  startTimer();
+}
+
+/* =========================================================
+   登入
+   ========================================================= */
+function startSession(cls, sid){
+  state.student = { cls, sid };
+  state.index = 0;
+  state.results = [];
+  state.sent = false;
+  state.sessionStart = Date.now();
+
+  $('studentPill').hidden = false;
+  $('studentPill').textContent = `${cls} ${sid} 號`;
+  $('scorePill').hidden = false;
+  updateScorePill();
+
+  $('loginScreen').hidden = true;
+  $('finishScreen').hidden = true;
+
+  renderProblem();
+  startTimer();
+}
+
+/* =========================================================
+   結業：顯示成績 + 上傳 Google Sheet
+   ========================================================= */
+function finishSession(){
+  clearInterval(timerId);
+  hideToast();
+
+  const total = PROBLEMS.length;
+  const firstTry = state.results.filter(r => r.firstTry).length;
+  const okCount = state.results.filter(r => r.ok).length;
+  const attempts = state.results.reduce((s, r) => s + r.tries, 0);
+  const usedSec = Math.round((Date.now() - state.sessionStart) / 1000);
+  const st = state.student;
+
+  $('finishWho').textContent = `${st.cls} 班 ${st.sid} 號`;
+  const big = $('finalScore');
+  big.textContent = `${okCount} / ${total}`;
+  big.className = 'score-big' + (okCount >= total * 0.8 ? ' ok' : '');
+  $('chipFirstTry').textContent = `首次答對：${firstTry} 題`;
+  $('chipAttempts').textContent = `總嘗試次數：${attempts} 次`;
+  $('chipTime').textContent = `用時：${fmtTime(usedSec)}`;
+
+  $('finishScreen').hidden = false;
+  sendResult(okCount, firstTry, attempts, usedSec, total);
+}
+
+function buildPayload(okCount, firstTry, attempts, usedSec, total){
+  const st = state.student;
+  return {
+    app: APP_NAME,
+    type: 'result',
+    ts: new Date().toISOString(),
+    v: APP_VERSION,
+    page: location.pathname,
+    title: document.title || '',
+    student: `${st.cls}-${st.sid}`,
+    class: st.cls,
+    sid: st.sid,
+    score: okCount,
+    firstTry: firstTry,
+    attempts: attempts,
+    total: total,
+    seconds: usedSec,
+    details: state.results.map(r => `${r.q}:${r.ok ? (r.firstTry ? 'O' : 'O(' + r.tries + '次)') : 'X'}`).join(','),
+    ua: navigator.userAgent || ''
+  };
+}
+
+function sendResult(okCount, firstTry, attempts, usedSec, total){
+  const status = $('sendStatus');
+  const btn = $('btnResend');
+  status.textContent = '正在上傳成績…';
+  status.className = 'send-status';
+  btn.hidden = true;
+
+  const body = JSON.stringify(buildPayload(okCount, firstTry, attempts, usedSec, total));
+
+  /* 本機備份，上傳失敗可按「重新上傳」 */
+  try { localStorage.setItem('lookdraw20_last', body); } catch (e) {}
+
+  let done = false;
+  const markOk = () => {
+    if (done) return;
+    done = true;
+    state.sent = true;
+    status.textContent = '✅ 成績已成功記錄！';
+    status.className = 'send-status ok';
+    btn.hidden = true;
+  };
+  const markFail = () => {
+    if (done) return;
+    done = true;
+    status.textContent = '⚠ 上傳未確認（可能網絡中斷），請按「重新上傳」。';
+    status.className = 'send-status bad';
+    btn.hidden = false;
+  };
+
+  try {
+    if (navigator.sendBeacon &&
+        navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'text/plain;charset=UTF-8' }))){
+      /* sendBeacon 無回傳內容，以 short fetch 確認 */
+      fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', keepalive: true,
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: body })
+        .then(markOk, markFail);
+      setTimeout(markOk, 1500);
+      return;
+    }
+  } catch (e) {}
+
+  fetch(ENDPOINT, {
+    method: 'POST', mode: 'no-cors', keepalive: true,
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: body
+  }).then(markOk, markFail);
+}
+
+/* =========================================================
+   事件
+   ========================================================= */
+document.querySelectorAll('.slot').forEach(el => {
+  el.addEventListener('click', () => clearSlot(Number(el.dataset.slot)));
+});
+
+$('answerBox').addEventListener('click', () => {
+  if (state.locked) return;
+  state.answer = '';
+  clearWrong('ans');
+  renderAnswer();
+  updateCheck();
+});
+
+$('checkBtn').addEventListener('click', checkAnswer);
+
+$('btnStart').addEventListener('click', () => {
+  const cls = $('inpClass').value;
+  const sid = $('inpSid').value;
+  const err = $('loginErr');
+
+  if (!cls){ err.textContent = '請先選擇班別！'; $('inpClass').focus(); return; }
+  if (!sid){ err.textContent = '請先選擇學號！'; $('inpSid').focus(); return; }
+
+  err.textContent = '';
+  startSession(cls, sid);
+});
+
+$('inpClass').addEventListener('change', () => {
+  $('loginErr').textContent = '';
+  $('inpSid').focus();
+});
+$('inpSid').addEventListener('change', () => { $('loginErr').textContent = ''; });
+
+$('btnAgain').addEventListener('click', () => {
+  $('finishScreen').hidden = true;
+  $('loginScreen').hidden = false;
+  $('inpSid').value = '';
+  $('inpClass').focus();
+});
+
+$('btnResend').addEventListener('click', () => {
+  const total = PROBLEMS.length;
+  const firstTry = state.results.filter(r => r.firstTry).length;
+  const okCount = state.results.filter(r => r.ok).length;
+  const attempts = state.results.reduce((s, r) => s + r.tries, 0);
+  const usedSec = Math.round((Date.now() - state.sessionStart) / 1000);
+  sendResult(okCount, firstTry, attempts, usedSec, total);
+});
+
+/* =========================================================
+   啟動：先顯示登入畫面
+   ========================================================= */
+/* 學號下拉：1 - 30 */
+(function fillSid(){
+  const sel = $('inpSid');
+  for (let i = 1; i <= 30; i++){
+    const o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = i;
+    sel.appendChild(o);
+  }
+})();
+
+updateTimerDisplay();
+</script>
+</body>
+</html>
