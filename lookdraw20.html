@@ -463,8 +463,20 @@ const state = {
   student: null,
   results: [],
   sessionStart: null,
-  sent: false
+  sent: false,
+  finished: false
 };
+
+/* 自動出成績：完成最後一題後 1.8 秒自動 Entry 結業畫面 */
+let autoFinishTimer = null;
+function scheduleAutoFinish(){
+  clearTimeout(autoFinishTimer);
+  if (state.index + 1 >= PROBLEMS.length && !state.finished){
+    autoFinishTimer = setTimeout(() => {
+      if (state.index + 1 >= PROBLEMS.length && !state.finished) finishSession();
+    }, 1800);
+  }
+}
 
 const $ = id => document.getElementById(id);
 
@@ -787,12 +799,17 @@ function setFeedback(type, msg, showNext){
   if (showNext){
     const btn = document.createElement('button');
     btn.className = 'btn-next';
-    btn.textContent = (state.index + 1 >= PROBLEMS.length) ? '睇成績 🎓' : '下一題 ➡';
+    const isLast = (state.index + 1 >= PROBLEMS.length);
+    btn.textContent = isLast ? '睇成績 🎓' : '下一題 ➡';
     btn.addEventListener('click', () => {
+      clearTimeout(autoFinishTimer);
       hideToast();
-      nextProblem();
+      /* 最後一題直接出成績，唔好再 nextProblem（避免 index 溢出／重新 render） */
+      if (isLast) finishSession();
+      else nextProblem();
     });
     t.appendChild(btn);
+    if (isLast) scheduleAutoFinish();
   } else {
     toastTimer = setTimeout(hideToast, 2600);
   }
@@ -1000,6 +1017,8 @@ function startSession(cls, sid){
   state.index = 0;
   state.results = [];
   state.sent = false;
+  state.finished = false;
+  clearTimeout(autoFinishTimer);
   state.sessionStart = Date.now();
 
   $('studentPill').hidden = false;
@@ -1018,7 +1037,10 @@ function startSession(cls, sid){
    結業：顯示成績 + 上傳 Google Sheet
    ========================================================= */
 function finishSession(){
+  if (state.finished) return;
+  state.finished = true;
   clearInterval(timerId);
+  clearTimeout(autoFinishTimer);
   hideToast();
 
   const total = PROBLEMS.length;
@@ -1094,11 +1116,8 @@ function sendResult(okCount, firstTry, attempts, usedSec, total){
   try {
     if (navigator.sendBeacon &&
         navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'text/plain;charset=UTF-8' }))){
-      /* sendBeacon 無回傳內容，以 short fetch 確認 */
-      fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', keepalive: true,
-        headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: body })
-        .then(markOk, markFail);
-      setTimeout(markOk, 1500);
+      /* sendBeacon 已送出一份，唔好再 fetch（否則 Sheet 會出現兩筆重複紀錄） */
+      setTimeout(markOk, 800);
       return;
     }
   } catch (e) {}
