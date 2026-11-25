@@ -254,7 +254,7 @@ body::before{
 .lb-head span{ white-space:nowrap; }
 #lbToggle{ border:none; background:#ffcf5c; color:#6b4700; border-radius:9px;
   width:26px; height:26px; line-height:1; font-weight:900; font-size:16px; cursor:pointer; padding:0; }
-.lb-body{ margin-top:8px; }
+.lb-body{ margin-top:8px; max-height:min(62vh,520px); overflow-y:auto; overscroll-behavior:contain; }
 .lb-row{ display:flex; align-items:center; gap:7px; padding:9px 0;
   border-bottom:1px dashed #e8dfc4; font-size:clamp(14px,2.6vw,17px); line-height:1.25; }
 .lb-row:last-child{ border-bottom:none; }
@@ -1071,7 +1071,7 @@ body::before{
 
 
   /* =========================================================
-     15. 即時排行榜（每 2.5 秒自動更新，只顯示首 3 名）
+     15. 即時排行榜（每 2.5 秒自動更新，只顯示首 10 名）
         上榜資格：必須完成全部 25 題（correct_count >= TOTAL）；未完成不上榜。
         排名規則：已完成者之間，用時短者優先（題數皆為 25）。
         資料來源：answer_events（每次答對即寫入）。
@@ -1123,10 +1123,10 @@ body::before{
       if (a.used !== b.used) { return a.used - b.used; }
       return a.ts < b.ts ? -1 : (a.ts > b.ts ? 1 : 0);
     });
-    return arr.slice(0, 3);
+    return arr.slice(0, 10);
   }
   function renderLb(list, ok) {
-    var html = '', medals = ['🥇', '🥈', '🥉'], i;
+    var html = '', medals = ['🥇', '🥈', '🥉', '4', '5', '6', '7', '8', '9', '10'], i;
     if (!list.length) {
       html = '<div class="lb-wait">' + (ok ? '完成 25 題才會上榜' : '排行榜連線中…') + '</div>';
     } else {
