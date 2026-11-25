@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>加法消消樂 · 老師後台（班別／學號／答對題數／時間）</title>
+<style>
+  :root{
+    --green:#3f8f5c; --green-d:#2f5b43; --line:#d8e8dc; --bg:#f2f7f3;
+    --ink:#1f3327; --muted:#6b7f72; --warn:#b4453c;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:18px 14px 60px; background:var(--bg); color:var(--ink);
+    font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+  }
+  .wrap{ max-width:900px; margin:0 auto; }
+  h1{ font-size:clamp(20px,3.4vw,28px); margin:0 0 4px; letter-spacing:1px; }
+  .sub{ color:var(--muted); font-size:14px; margin-bottom:14px; }
+  .bar{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px; }
+  button{
+    font:inherit; font-weight:700; font-size:14px; padding:9px 16px; border-radius:999px;
+    border:2px solid var(--green); background:#fff; color:var(--green-d); cursor:pointer;
+  }
+  button.primary{ background:var(--green); color:#fff; }
+  button:disabled{ opacity:.55; cursor:default; }
+  .auto{ font-size:13px; color:var(--muted); font-weight:700; }
+  select{ font:inherit; font-size:14px; padding:8px 10px; border:2px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); }
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:6px 0 0; margin-bottom:16px; overflow:hidden; }
+  .scroller{ overflow-x:auto; max-height:70vh; overflow-y:auto; }
+  table{ border-collapse:collapse; width:100%; font-size:15px; }
+  th,td{ padding:11px 14px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th{ background:#eef6f0; font-size:13.5px; color:var(--green-d); position:sticky; top:0; z-index:1; }
+  tbody tr:hover{ background:#f8fcf9; }
+  .num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .cnt{ font-weight:900; color:#d1481e; font-size:1.08em; }
+  .tsub{ color:var(--muted); font-size:11.5px; margin-left:4px; }
+  .empty, .err{ padding:26px 16px; text-align:center; color:var(--muted); font-size:14.5px; }
+  .err{ color:var(--warn); }
+  .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#c9d8cd; margin-right:6px; vertical-align:middle; }
+  .dot.on{ background:#4fb377; }
+  .foot{ color:var(--muted); font-size:12.5px; line-height:1.7; margin-top:10px; }
+  .note{ background:#fff8e6; border:1px solid #f0dfb4; border-radius:12px; padding:10px 14px; font-size:13px; color:#7a5a12; margin-bottom:14px; }
+  .stat{ display:inline-block; background:#eef6f0; color:var(--green-d); border-radius:999px; padding:4px 11px; font-size:12.5px; font-weight:800; margin-left:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>🎯 加法消消樂 · 老師後台</h1>
+  <div class="sub"><span class="dot" id="dot"></span><span id="conn">連線中…</span> · 每 10 秒自動更新</div>
+
+  <div class="note">
+    每位學生顯示<b>最後一次答對的題數</b>及該次<b>用時</b>（括號內為完成時刻）。
+    排序：答對題數多者優先；題數相同時用時短者優先。<span class="stat" id="stat">—</span>
+  </div>
+
+  <div class="bar">
+    <button class="primary" id="btnReload">↻ 立即更新</button>
+    <button id="btnCsv">⬇ 下載 CSV</button>
+    <select id="selClass"><option value="">全部班別</option><option>1A</option><option>1B</option><option>1C</option><option>1D</option></select>
+    <label class="auto"><input type="checkbox" id="chkAuto" checked> 自動更新</label>
+  </div>
+
+  <div class="panel">
+    <div class="scroller"><table id="tblMain">
+      <thead><tr>
+        <th>班別</th><th>學號</th><th class="num">最後答對題數</th><th class="num">時間</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="empty" id="empty" hidden>暫時未有答題紀錄。學生完成 25 題後會自動出現。</div>
+    <div class="err" id="err" hidden></div>
+  </div>
+
+  <div class="foot">
+    私隱：只記錄班別、學號、答對題數、用時；不含姓名、不含 IP、無 cookie、無行為錄影。<br>
+    學生端：<b>https://yuiheiwanki-alt.github.io/maths/addition-match.html?v=6</b>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  /* n=200 可回全部列；n>=500 會被 Apps Script 限制（實測 n=1000 只回 20 列） */
+  var API = "https://script.google.com/macros/s/AKfycbwrq_CsUly6S4237NssZ1QovTpklsN-wlEgXrPflB8X8fgYnRH2-Pt3wcON64ltXMvc/exec?action=rows&n=200";
+  var $ = function (id) { return document.getElementById(id); };
+  var ROWS = [], timer = 0, busy = false;
+
+  function setConn(ok, msg) {
+    var d = $("dot");
+    if (d) { d.className = ok ? "dot on" : "dot"; }
+    $("conn").textContent = msg;
+  }
+  function num(v) { var n = parseInt(v, 10); return isFinite(n) ? n : 0; }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c];
+    });
+  }
+  function mmss(sec) {
+    var s = num(sec); if (s < 0) { s = 0; }
+    return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+  }
+  /* Sheet 時間欄本身已係香港時間字串 "YYYY-MM-DD HH:MM:SS" */
+  function hkClock(s) {
+    s = String(s || "");
+    var m = s.match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+    return m ? (m[2] + "-" + m[3] + " " + m[4] + ":" + m[5]) : "";
+  }
+  function keyOf(r) { return "C:" + r.cls + "/" + r.seat; }
+
+  /* 每位學生取最後一筆（時間最大）；過濾空白列 / 測試 linking id */
+  function lastPerStudent(rows) {
+    var best = {}, i, r, k, cur, ts;
+    for (i = 0; i < rows.length; i++) {
+      r = rows[i]; if (!r) { continue; }
+      r.cls = String(r.cls || "").trim().toUpperCase().replace(/\s+/g, "");  // 1b/1 B → 1B
+      r.seat = String(r.seat || "").trim();
+      if (!/^[1-6][A-D]$/.test(r.cls)) { continue; }        // 只保留 1A–1D 有效班別（排除 7A/5c/B 等舊測試）
+      if (!r.seat || !num(r.cnt)) { continue; }              // 空白列／無效 payload
+      if (/^(CURLTEST|APPTEST|TEST|UIVERIFY|LBTEST|PUBCHECK|FINALCHECK|REPLAYV|V2CHECK)$/i.test(r.link)) { continue; }
+      k = keyOf(r); ts = String(r.ts || "");
+      cur = best[k];
+      if (!cur || ts > cur.ts) {
+        best[k] = { cls:r.cls, seat:r.seat, cnt:num(r.cnt), used:num(r.used), ts:ts };
+      }
+    }
+    var arr = [];
+    for (k in best) { if (Object.prototype.hasOwnProperty.call(best, k)) { arr.push(best[k]); } }
+    arr.sort(function (a, b) {
+      if (b.cnt !== a.cnt) { return b.cnt - a.cnt; }
+      if (a.used !== b.used) { return a.used - b.used; }
+      return a.ts < b.ts ? -1 : (a.ts > b.ts ? 1 : 0);
+    });
+    return arr;
+  }
+
+  function render() {
+    var cls = $("selClass").value;
+    var all = lastPerStudent(ROWS);
+    var rows = cls ? all.filter(function (r) { return r.cls === cls; }) : all;
+    var tb = $("tblMain").querySelector("tbody"), i, r, tr;
+    tb.innerHTML = "";
+    for (i = 0; i < rows.length; i++) {
+      r = rows[i];
+      tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + esc(r.cls) + "</td>" +
+        "<td>" + esc(r.seat) + "</td>" +
+        '<td class="num"><span class="cnt">' + r.cnt + "</span></td>" +
+        '<td class="num">' + esc(mmss(r.used)) +
+          '<span class="tsub">' + esc(hkClock(r.ts)) + "</span></td>";
+      tb.appendChild(tr);
+    }
+    $("empty").hidden = rows.length > 0;
+    $("stat").textContent = "共 " + rows.length + " 位學生";
+  }
+
+  function load() {
+    if (busy) { return; }
+    busy = true; $("btnReload").disabled = true;
+    setConn(false, "載入中…");
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", API, true);
+    xhr.timeout = 25000;
+    xhr.onload = function () {
+      busy = false; $("btnReload").disabled = false;
+      if (xhr.status < 200 || xhr.status >= 300) {
+        $("err").hidden = false; $("err").textContent = "讀取失敗（HTTP " + xhr.status + "）";
+        setConn(false, "讀取失敗"); return;
+      }
+      var d;
+      try { d = JSON.parse(xhr.responseText); }
+      catch (e) { $("err").hidden = false; $("err").textContent = "回應格式錯誤"; setConn(false, "讀取失敗"); return; }
+      var h = d.headers || [], idx = {};
+      h.forEach(function (name, i) { idx[name] = i; });
+      ROWS = (d.rows || []).map(function (a) {
+        return {
+          ts:   a[idx["時間"]]      || "",
+          link: a[idx["連結ID"]]    || "",
+          cls:  a[idx["班別"]]      || "",
+          seat: a[idx["座號"]]      || "",
+          cnt:  a[idx["答對題數"]]  || 0,
+          used: a[idx["用時(秒)"]]  || 0
+        };
+      });
+      $("err").hidden = true;
+      setConn(true, "已連線 · 最後更新 " + new Date().toLocaleTimeString("zh-HK", { hour12: false }));
+      render();
+    };
+    xhr.onerror = function () {
+      busy = false; $("btnReload").disabled = false;
+      $("err").hidden = false; $("err").textContent = "網絡錯誤，請檢查連線";
+      setConn(false, "連線失敗");
+    };
+    xhr.ontimeout = function () {
+      busy = false; $("btnReload").disabled = false;
+      $("err").hidden = false; $("err").textContent = "讀取逾時，請按「立即更新」重試";
+      setConn(false, "讀取逾時");
+    };
+    xhr.send();
+  }
+
+  function toCsv() {
+    var rows = lastPerStudent(ROWS);
+    var lines = [["班別", "學號", "最後答對題數", "用時(秒)", "完成時刻"].join(",")];
+    rows.forEach(function (r) {
+      var cells = [r.cls, r.seat, r.cnt, r.used, hkClock(r.ts)];
+      lines.push(cells.map(function (c) {
+        c = String(c == null ? "" : c);
+        return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c;
+      }).join(","));
+    });
+    var blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a"), d = new Date();
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    a.href = URL.createObjectURL(blob);
+    a.download = "消消樂答對紀錄_" + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + ".csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+  }
+
+  $("btnReload").addEventListener("click", load);
+  $("btnCsv").addEventListener("click", toCsv);
+  $("selClass").addEventListener("change", render);
+  $("chkAuto").addEventListener("change", function () {
+    if (timer) { clearInterval(timer); timer = 0; }
+    if (this.checked) { timer = setInterval(load, 10000); }
+  });
+  window.addEventListener("load", function () {
+    load();
+    timer = setInterval(load, 10000);
+  });
+})();
+</script>
+</body>
+</html>
